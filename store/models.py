@@ -88,7 +88,7 @@ class Order(models.Model):
     notes = models.TextField(blank=True, verbose_name="Remarques")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Statut")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de commande")
-    
+    estimated_delivery_date = models.DateField(null=True, blank=True, verbose_name="Date de livraison estimée")
     class Meta:
         verbose_name = "Commande"
         verbose_name_plural = "Commandes"
@@ -133,7 +133,7 @@ class CommunityPost(models.Model):
     content = models.TextField(verbose_name="Contenu")
     post_type = models.CharField(max_length=20, choices=POST_TYPES, default='discussion', verbose_name="Type de post")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Produit lié")
-    is_approved = models.BooleanField(default=False, verbose_name="Approuvé")
+    is_approved = models.BooleanField(default=True, verbose_name="Approuvé")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

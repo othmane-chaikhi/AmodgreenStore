@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Détail commande #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-4">Détail de la commande #{{ order.id }}</h1>
+
+    <p><strong>Client :</strong> {{ order.full_name }}</p>
+    <p><strong>Produit :</strong> {{ order.product.name }}</p>
+    <p><strong>Status :</strong> {{ order.get_status_display }}</p>
+    <p><strong>Quantité :</strong> {{ order.quantity }}</p>
+    <p><strong>Adresse :</strong> {{ order.address }}</p>
+    <!-- ajoute d'autres infos si besoin -->
+
+    <form method="post" class="mt-6">
+        {% csrf_token %}
+        <button name="action" value="confirm" class="bg-green-600 text-white px-4 py-2 rounded mr-4">
+            Confirmer la commande
+        </button>
+        <button name="action" value="cancel" class="bg-red-600 text-white px-4 py-2 rounded">
+            Annuler la commande
+        </button>
+    </form>
+
+    <a href="{% url 'admin_dashboard' %}" class="inline-block mt-4 text-blue-600 hover:underline">Retour au tableau de bord</a>
+</div>
+{% endblock %}

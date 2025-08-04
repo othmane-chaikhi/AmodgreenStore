@@ -209,3 +209,13 @@ class ProductForm(forms.ModelForm):
         # Ajout de classes CSS personnalisées
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+from django import forms
+from django.utils import timezone
+from .models import Order
+
+class ConfirmOrderForm(forms.Form):
+    delivery_date = forms.DateField(
+        label="Date estimée de livraison",
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        initial=timezone.now().date()
+    )

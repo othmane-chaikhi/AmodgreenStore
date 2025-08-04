@@ -151,25 +151,28 @@ def register_view(request):
     return render(request, 'registration/register.html', {'form': form})
 
 
+from django.core.paginator import Paginator
+
 def community(request):
-    """Page communauté avec posts et formulaires"""
-    # Récupérer tous les posts approuvés
-    posts = CommunityPost.objects.filter(is_approved=True).order_by('-created_at')
-    
-    # Filtres
+    """Page communauté avec posts filtrés, pagination et formulaires pour utilisateur connecté."""
     post_type = request.GET.get('type')
-    if post_type:
+
+    # Récupérer les posts approuvés, filtrer par type si spécifié
+    posts = CommunityPost.objects.filter(is_approved=True)
+    if post_type in ['review', 'testimonial', 'discussion']:
         posts = posts.filter(post_type=post_type)
     
-    # Pagination
+    posts = posts.order_by('-created_at')
+
+    # Pagination (10 posts par page)
     paginator = Paginator(posts, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    # Formulaires
+
+    # Formulaires affichés uniquement si utilisateur connecté
     post_form = CommunityPostForm() if request.user.is_authenticated else None
     comment_form = CommentForm() if request.user.is_authenticated else None
-    
+
     context = {
         'page_obj': page_obj,
         'post_form': post_form,
@@ -177,6 +180,7 @@ def community(request):
         'current_type': post_type,
     }
     return render(request, 'store/community.html', context)
+
 
 
 @login_required

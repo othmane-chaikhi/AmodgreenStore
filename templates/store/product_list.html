@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nos Produits - AmodGreen{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-stone-800 mb-4">🌿 Nos Produits Naturels</h1>
+        <p class="text-xl text-stone-600 max-w-2xl mx-auto">
+            Découvrez notre gamme complète de produits naturels authentiques du Maroc.
+        </p>
+    </div>
+
+    <!-- Filtres -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <form method="GET" class="flex flex-col md:flex-row gap-4">
+            <!-- Recherche -->
+            <div class="flex-1">
+                <input type="text" name="search" value="{{ search_query }}" 
+                       placeholder="Rechercher un produit..." 
+                       class="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500">
+            </div>
+
+            <!-- Catégorie -->
+            <div class="md:w-64">
+                <select name="category" class="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500">
+                    <option value="">Toutes les catégories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category.id == current_category %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Bouton recherche -->
+            <button type="submit" class="bg-olive-600 hover:bg-olive-700 text-white px-6 py-2 rounded-lg transition-colors">
+                <i class="fas fa-search mr-2"></i>Filtrer
+            </button>
+
+            <!-- Reset -->
+            {% if search_query or current_category %}
+                <a href="{% url 'product_list' %}" class="bg-stone-200 hover:bg-stone-300 text-stone-700 px-6 py-2 rounded-lg transition-colors text-center">
+                    <i class="fas fa-times mr-2"></i>Reset
+                </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Résultats -->
+    {% if search_query or current_category %}
+        <div class="mb-6 text-stone-600">
+            <i class="fas fa-filter mr-2"></i>
+            {{ page_obj.paginator.count }} produit{{ page_obj.paginator.count|pluralize }} trouvé{{ page_obj.paginator.count|pluralize }}
+            {% if search_query %}pour "{{ search_query }}"{% endif %}
+            {% if current_category %}
+                {% for category in categories %}
+                    {% if category.id == current_category %}
+                        dans "{{ category.name }}"
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Grille des produits -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for product in page_obj %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                <!-- Image produit -->
+                <div class="relative">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                             class="w-full h-48 object-cover">
+                    {% else %}
+                        <div class="w-full h-48 bg-stone-200 flex items-center justify-center">
+                            <i class="fas fa-leaf text-4xl text-stone-400"></i>
+                        </div>
+                    {% endif %}
+
+                    <!-- Badge catégorie -->
+                    <div class="absolute top-3 left-3">
+                        <span class="bg-olive-600 text-white text-xs px-2 py-1 rounded-full">
+                            {{ product.category.name }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Contenu produit -->
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-stone-800 mb-2 line-clamp-1">
+                        {{ product.name }}
+                    </h3>
+
+                    <p class="text-stone-600 text-sm mb-3 line-clamp-2">
+                        {{ product.description|truncatewords:12 }}
+                    </p>
+
+                    <!-- Prix et actions -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-xl font-bold text-olive-600">
+                            {{ product.price }} MAD
+                        </span>
+
+                        <div class="flex gap-2">
+                            <a href="{{ product.get_absolute_url }}" 
+                               class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-eye mr-1"></i>Voir
+                            </a>
+                            <a href="{% url 'order_create' %}?product={{ product.id }}" 
+                               class="bg-olive-600 hover:bg-olive-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-shopping-cart mr-1"></i>Commander
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-span-full text-center py-16">
+                <i class="fas fa-search text-6xl text-stone-300 mb-6"></i>
+                <h3 class="text-2xl font-semibold text-stone-600 mb-4">Aucun produit trouvé</h3>
+                <p class="text-stone-500 mb-6">
+                    {% if search_query or current_category %}
+                        Aucun produit ne correspond à vos critères de recherche.
+                    {% else %}
+                        Aucun produit n'est disponible pour le moment.
+                    {% endif %}
+                </p>
+                {% if search_query or current_category %}
+                    <a href="{% url 'product_list' %}" 
+                       class="bg-olive-600 hover:bg-olive-700 text-white px-6 py-3 rounded-lg transition-colors">
+                        Voir tous les produits
+                    </a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <div class="mt-12 flex justify-center">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" 
+                       class="bg-white border border-stone-300 text-stone-500 hover:bg-stone-50 px-3 py-2 rounded-l-lg transition-colors">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" 
+                       class="bg-white border border-stone-300 text-stone-500 hover:bg-stone-50 px-3 py-2 transition-colors">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                {% endif %}
+
+                <span class="bg-olive-600 text-white px-4 py-2">
+                    {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" 
+                       class="bg-white border border-stone-300 text-stone-500 hover:bg-stone-50 px-3 py-2 transition-colors">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" 
+                       class="bg-white border border-stone-300 text-stone-500 hover:bg-stone-50 px-3 py-2 rounded-r-lg transition-colors">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

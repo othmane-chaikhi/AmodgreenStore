@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - AmodGreen{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-8 text-sm">
+        <ol class="flex items-center space-x-2 text-stone-500">
+            <li><a href="{% url 'home' %}" class="hover:text-olive-600">Accueil</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li><a href="{% url 'product_list' %}" class="hover:text-olive-600">Produits</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li class="text-stone-800 font-medium">{{ product.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Détail produit -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+        <!-- Image produit -->
+        <div class="space-y-4">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                         class="w-full h-96 object-cover">
+                {% else %}
+                    <div class="w-full h-96 bg-stone-200 flex items-center justify-center">
+                        <i class="fas fa-leaf text-6xl text-stone-400"></i>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Badge catégorie -->
+            <div class="flex justify-center">
+                <span class="bg-olive-600 text-white px-4 py-2 rounded-full text-sm font-medium">
+                    <i class="fas fa-tag mr-2"></i>{{ product.category.name }}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Informations produit -->
+        <div class="space-y-6">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
+                    {{ product.name }}
+                </h1>
+                
+                <div class="text-4xl font-bold text-olive-600 mb-6">
+                    {{ product.price }} MAD
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="prose max-w-none">
+                <h3 class="text-xl font-semibold text-stone-800 mb-3">Description</h3>
+                <p class="text-stone-600 leading-relaxed">{{ product.description }}</p>
+            </div>
+            
+            <!-- Ingrédients -->
+            {% if product.ingredients %}
+                <div class="prose max-w-none">
+                    <h3 class="text-xl font-semibold text-stone-800 mb-3">
+                        <i class="fas fa-leaf mr-2 text-olive-600"></i>Ingrédients
+                    </h3>
+                    <p class="text-stone-600 leading-relaxed">{{ product.ingredients }}</p>
+                </div>
+            {% endif %}
+            
+            <!-- Actions -->
+            <div class="space-y-4 pt-6 border-t border-stone-200">
+                <a href="{% url 'order_create' %}?product={{ product.id }}" 
+                   class="w-full bg-olive-600 hover:bg-olive-700 text-white text-center px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center">
+                    <i class="fas fa-shopping-cart mr-3"></i>
+                    Commander ce produit
+                </a>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <a href="{% url 'product_list' %}" 
+                       class="bg-stone-200 hover:bg-stone-300 text-stone-700 text-center px-6 py-3 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Retour
+                    </a>
+                    
+                    <button onclick="shareProduct()" 
+                            class="bg-sage-600 hover:bg-sage-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-share mr-2"></i>Partager
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Informations supplémentaires -->
+            <div class="bg-stone-50 rounded-lg p-6 space-y-3">
+                <h4 class="font-semibold text-stone-800 mb-3">
+                    <i class="fas fa-info-circle mr-2 text-olive-600"></i>Informations
+                </h4>
+                <div class="flex items-center text-sm text-stone-600">
+                    <i class="fas fa-check-circle mr-3 text-green-600"></i>
+                    100% Naturel et Bio
+                </div>
+                <div class="flex items-center text-sm text-stone-600">
+                    <i class="fas fa-shipping-fast mr-3 text-blue-600"></i>
+                    Livraison dans tout le Maroc
+                </div>
+                <div class="flex items-center text-sm text-stone-600">
+                    <i class="fas fa-users mr-3 text-olive-600"></i>
+                    Produit de coopérative
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Avis sur ce produit -->
+    {% if product_reviews %}
+        <section class="mb-16">
+            <h2 class="text-2xl font-bold text-stone-800 mb-8">
+                <i class="fas fa-comments mr-3 text-olive-600"></i>
+                Avis sur ce produit
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for review in product_reviews %}
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-olive-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                {{ review.author.first_name.0|default:review.author.username.0 }}
+                            </div>
+                            <div class="ml-3">
+                                <div class="font-semibold text-stone-800">
+                                    {{ review.author.first_name|default:review.author.username }}
+                                </div>
+                                <div class="text-sm text-stone-500">
+                                    {{ review.created_at|date:"d M Y" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h4 class="font-semibold text-stone-800 mb-2">{{ review.title }}</h4>
+                        <p class="text-stone-600">{{ review.content|truncatewords:30 }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center mt-8">
+                <a href="{% url 'community' %}?type=review" 
+                   class="text-olive-600 hover:text-olive-700 font-medium">
+                    Voir tous les avis →
+                </a>
+            </div>
+        </section>
+    {% endif %}
+    
+    <!-- Produits similaires -->
+    {% if related_products %}
+        <section>
+            <h2 class="text-2xl font-bold text-stone-800 mb-8">
+                <i class="fas fa-leaf mr-3 text-sage-600"></i>
+                Produits similaires
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for related_product in related_products %}
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                        {% if related_product.image %}
+                            <img src="{{ related_product.image.url }}" alt="{{ related_product.name }}" 
+                                 class="w-full h-40 object-cover">
+                        {% else %}
+                            <div class="w-full h-40 bg-stone-200 flex items-center justify-center">
+                                <i class="fas fa-leaf text-3xl text-stone-400"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="p-4">
+                            <h3 class="font-semibold text-stone-800 mb-2 line-clamp-1">
+                                {{ related_product.name }}
+                            </h3>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-lg font-bold text-olive-600">
+                                    {{ related_product.price }} MAD
+                                </span>
+                                
+                                <div class="flex gap-1">
+                                    <a href="{{ related_product.get_absolute_url }}" 
+                                       class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded text-xs transition-colors">
+                                        Voir
+                                    </a>
+                                    <a href="{% url 'order_create' %}?product={{ related_product.id }}" 
+                                       class="bg-olive-600 hover:bg-olive-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        Commander
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+
+<script>
+function shareProduct() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ product.name }} - AmodGreen',
+            text: '{{ product.description|truncatewords:20 }}',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copier l'URL
+        navigator.clipboard.writeText(window.location.href);
+        alert('Lien copié dans le presse-papier !');
+    }
+}
+</script>
+{% endblock %}

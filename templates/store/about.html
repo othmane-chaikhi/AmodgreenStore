@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}À propos - AmodGreen{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Header -->
+    <div class="text-center mb-16">
+        <h1 class="text-4xl md:text-5xl font-bold text-stone-800 mb-6">
+            🌿 À propos d'AmodGreen
+        </h1>
+        <p class="text-xl text-stone-600 max-w-3xl mx-auto">
+            Découvrez l'histoire de notre coopérative marocaine et notre engagement 
+            pour les produits naturels authentiques.
+        </p>
+    </div>
+    
+    <!-- Notre histoire -->
+    <section class="mb-16">
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-3xl font-bold text-stone-800 mb-6">
+                📖 Notre Histoire
+            </h2>
+            <div class="prose max-w-none text-stone-600 leading-relaxed">
+                <p class="text-lg mb-4">
+                    AmodGreen est née de la passion de producteurs marocains pour les trésors naturels de notre terre. 
+                    Fondée en 2020, notre coopérative rassemble des artisans traditionnels et des agriculteurs 
+                    biologiques du Maroc, unis par une vision commune : partager l'authenticité de nos produits naturels 
+                    avec le monde entier.
+                </p>
+                <p class="mb-4">
+                    De l'huile d'argan précieuse des arganiers du Sud-Ouest marocain à l'amlou savoureux préparé 
+                    selon des recettes ancestrales, en passant par nos huiles essentielles distillées avec soin 
+                    et nos plantes médicinales séchées selon les traditions berbères, chaque produit AmodGreen 
+                    raconte une histoire de savoir-faire et d'authenticité.
+                </p>
+                <p>
+                    Nous croyons fermement que les produits naturels de qualité ne doivent pas être un luxe, 
+                    mais un droit accessible à tous. C'est pourquoi nous nous engageons à proposer des prix 
+                    justes qui rémunèrent équitablement nos producteurs tout en rendant nos produits accessibles 
+                    à toutes les familles marocaines.
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Nos valeurs -->
+    <section class="mb-16">
+        <h2 class="text-3xl font-bold text-stone-800 text-center mb-12">
+            ✨ Nos Valeurs
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="bg-olive-50 border border-olive-200 rounded-lg p-6 text-center">
+                <div class="w-16 h-16 bg-olive-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-leaf text-2xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-olive-800 mb-3">100% Naturel</h3>
+                <p class="text-olive-700">
+                    Tous nos produits sont issus de l'agriculture biologique, sans additifs chimiques, 
+                    dans le respect de la nature et de votre santé.
+                </p>
+            </div>
+            
+            <div class="bg-sage-50 border border-sage-200 rounded-lg p-6 text-center">
+                <div class="w-16 h-16 bg-sage-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-handshake text-2xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-sage-800 mb-3">Commerce Équitable</h3>
+                <p class="text-sage-700">
+                    Nous garantissons une rémunération juste à nos producteurs et artisans, 
+                    soutenant ainsi l'économie locale et les communautés rurales.
+                </p>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                <div class="w-16 h-16 bg-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-star text-2xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-yellow-800 mb-3">Qualité Premium</h3>
+                <p class="text-yellow-700">
+                    Chaque produit est soigneusement sélectionné et contrôlé pour garantir 
+                    une qualité exceptionnelle digne des traditions marocaines.
+                </p>
+            </div>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+                <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-heart text-2xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-blue-800 mb-3">Bien-être</h3>
+                <p class="text-blue-700">
+                    Nos produits contribuent à votre bien-être quotidien grâce aux propriétés 
+                    bienfaisantes des plantes et huiles naturelles du Maroc.
+                </p>
+            </div>
+            
+            <div class="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-recycle text-2xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-green-800 mb-3">Durabilité</h3>
+                <p class="text-green-700">
+                    Nous adoptons des pratiques respectueuses de l'environnement 
+                    et promouvons une consommation responsable et durable.
+                </p>
+            </div>
+            
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
+                <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-users text-2xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-purple-800 mb-3">Communauté</h3>
+                <p class="text-purple-700">
+                    Nous cultivons une communauté bienveillante où chacun peut partager 
+                    ses expériences et découvertes autour des produits naturels.
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Nos produits -->
+    <section class="mb-16">
+        <div class="bg-gradient-to-r from-olive-600 to-sage-600 text-white rounded-lg p-8">
+            <h2 class="text-3xl font-bold text-center mb-8">
+                🌟 Nos Spécialités
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-tint mr-3 mt-1 text-yellow-300"></i>
+                        <div>
+                            <h4 class="font-semibold mb-1">Huile d'Argan</h4>
+                            <p class="text-stone-100 text-sm">
+                                Huile précieuse extraite des arganiers centenaires, 
+                                riche en vitamine E et acides gras essentiels.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <i class="fas fa-seedling mr-3 mt-1 text-green-300"></i>
+                        <div>
+                            <h4 class="font-semibold mb-1">Amlou Traditionnel</h4>
+                            <p class="text-stone-100 text-sm">
+                                Pâte à tartiner naturelle à base d'amandes, d'huile d'argan 
+                                et de miel, préparée selon les recettes ancestrales.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <i class="fas fa-flask mr-3 mt-1 text-blue-300"></i>
+                        <div>
+                            <h4 class="font-semibold mb-1">Huiles Essentielles</h4>
+                            <p class="text-stone-100 text-sm">
+                                Distillées à partir de plantes aromatiques marocaines : 
+                                eucalyptus, menthe, romarin, lavande sauvage.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-leaf mr-3 mt-1 text-green-300"></i>
+                        <div>
+                            <h4 class="font-semibold mb-1">Plantes Médicinales</h4>
+                            <p class="text-stone-100 text-sm">
+                                Sélection de plantes thérapeutiques séchées : 
+                                thym, sauge, verveine, camomille, fenugrec.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <i class="fas fa-mortar-pestle mr-3 mt-1 text-orange-300"></i>
+                        <div>
+                            <h4 class="font-semibold mb-1">Épices & Condiments</h4>
+                            <p class="text-stone-100 text-sm">
+                                Mélanges d'épices traditionnels, ras el hanout, 
+                                harissa artisanale, olives marinées.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <i class="fas fa-heart mr-3 mt-1 text-red-300"></i>
+                        <div>
+                            <h4 class="font-semibold mb-1">Cosmétiques Naturels</h4>
+                            <p class="text-stone-100 text-sm">
+                                Savons au lait de chèvre, masques à base d'argile, 
+                                crèmes hydratantes naturelles.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Notre engagement -->
+    <section class="mb-16">
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-3xl font-bold text-stone-800 mb-6 text-center">
+                🤝 Notre Engagement
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold text-olive-800 mb-4">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        Garantie Qualité
+                    </h3>
+                    <ul class="space-y-2 text-stone-600">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-2 mt-1 text-green-600"></i>
+                            <span>Contrôle qualité rigoureux sur tous nos produits</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-2 mt-1 text-green-600"></i>
+                            <span>Traçabilité complète de la production à la livraison</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-2 mt-1 text-green-600"></i>
+                            <span>Satisfaction client ou remboursement</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold text-sage-800 mb-4">
+                        <i class="fas fa-shipping-fast mr-2"></i>
+                        Service Client
+                    </h3>
+                    <ul class="space-y-2 text-stone-600">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-2 mt-1 text-green-600"></i>
+                            <span>Livraison rapide dans tout le Maroc</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-2 mt-1 text-green-600"></i>
+                            <span>Support client réactif via WhatsApp</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-2 mt-1 text-green-600"></i>
+                            <span>Conseils d'utilisation personnalisés</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Call to Action -->
+    <section class="text-center">
+        <div class="bg-olive-50 border border-olive-200 rounded-lg p-8">
+            <h2 class="text-2xl font-bold text-olive-800 mb-4">
+                🌿 Rejoignez l'Aventure AmodGreen
+            </h2>
+            <p class="text-olive-700 mb-6 max-w-2xl mx-auto">
+                Découvrez nos produits naturels authentiques et rejoignez notre communauté 
+                de passionnés du bien-être naturel et du commerce équitable.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'product_list' %}" 
+                   class="bg-olive-600 hover:bg-olive-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-shopping-bag mr-2"></i>
+                    Découvrir nos produits
+                </a>
+                
+                <a href="{% url 'community' %}" 
+                   class="bg-sage-600 hover:bg-sage-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-users mr-2"></i>
+                    Rejoindre la communauté
+                </a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

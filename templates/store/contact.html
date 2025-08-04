@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact - AmodGreen{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Header -->
+    <div class="text-center mb-16">
+        <h1 class="text-4xl md:text-5xl font-bold text-stone-800 mb-6">
+            📞 Contactez-nous
+        </h1>
+        <p class="text-xl text-stone-600 max-w-3xl mx-auto">
+            Notre équipe est à votre disposition pour répondre à toutes vos questions 
+            sur nos produits naturels et votre commande.
+        </p>
+    </div>
+    
+    <!-- Méthodes de contact -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        <!-- WhatsApp -->
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+            <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fab fa-whatsapp text-2xl text-white"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-green-800 mb-3">WhatsApp</h3>
+            <p class="text-green-700 mb-4">
+                Contactez-nous directement sur WhatsApp pour un service rapide et personnalisé.
+            </p>
+            <a href="https://wa.me/212600000000?text=Bonjour AmodGreen, j'ai une question" 
+               target="_blank"
+               class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-block">
+                <i class="fab fa-whatsapp mr-2"></i>
+                Ouvrir WhatsApp
+            </a>
+        </div>
+        
+        <!-- Email -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-envelope text-2xl text-white"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-blue-800 mb-3">Email</h3>
+            <p class="text-blue-700 mb-4">
+                Envoyez-nous un email pour toute question détaillée ou demande spécifique.
+            </p>
+            <a href="mailto:contact@amodgreen.ma" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-block">
+                <i class="fas fa-envelope mr-2"></i>
+                contact@amodgreen.ma
+            </a>
+        </div>
+        
+        <!-- Téléphone -->
+        <div class="bg-olive-50 border border-olive-200 rounded-lg p-6 text-center">
+            <div class="w-16 h-16 bg-olive-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-phone text-2xl text-white"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-olive-800 mb-3">Téléphone</h3>
+            <p class="text-olive-700 mb-4">
+                Appelez-nous directement pour une assistance immédiate.
+            </p>
+            <a href="tel:+212600000000" 
+               class="bg-olive-600 hover:bg-olive-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-block">
+                <i class="fas fa-phone mr-2"></i>
+                +212 6XX XXX XXX
+            </a>
+        </div>
+    </div>
+    
+    <!-- Horaires et disponibilité -->
+    <div class="bg-white rounded-lg shadow-md p-8 mb-16">
+        <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">
+            🕒 Horaires de Service
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold text-stone-800 mb-4">
+                    <i class="fas fa-clock mr-2 text-olive-600"></i>
+                    Disponibilité
+                </h3>
+                <ul class="space-y-2 text-stone-600">
+                    <li class="flex justify-between">
+                        <span>Lundi - Vendredi</span>
+                        <span class="font-medium">8h00 - 18h00</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span>Samedi</span>
+                        <span class="font-medium">9h00 - 17h00</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span>Dimanche</span>
+                        <span class="font-medium">10h00 - 16h00</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold text-stone-800 mb-4">
+                    <i class="fas fa-shipping-fast mr-2 text-sage-600"></i>
+                    Délais de Réponse
+                </h3>
+                <ul class="space-y-2 text-stone-600">
+                    <li class="flex items-center">
+                        <i class="fab fa-whatsapp mr-3 text-green-600"></i>
+                        <span>WhatsApp : Immédiat (heures ouvrables)</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-envelope mr-3 text-blue-600"></i>
+                        <span>Email : Sous 24h</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-phone mr-3 text-olive-600"></i>
+                        <span>Téléphone : Immédiat</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAQ rapide -->
+    <div class="bg-stone-50 rounded-lg p-8 mb-16">
+        <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">
+            ❓ Questions Fréquentes
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <div>
+                    <h4 class="font-semibold text-stone-800 mb-2">
+                        Comment passer une commande ?
+                    </h4>
+                    <p class="text-stone-600 text-sm">
+                        Remplissez notre formulaire de commande en ligne ou contactez-nous directement 
+                        via WhatsApp. Nous vous contacterons pour confirmer les détails.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-stone-800 mb-2">
+                        Quels sont les délais de livraison ?
+                    </h4>
+                    <p class="text-stone-600 text-sm">
+                        Nous livrons dans tout le Maroc sous 2-5 jours ouvrables selon votre ville. 
+                        Livraison express disponible pour Casablanca et Rabat.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-stone-800 mb-2">
+                        Vos produits sont-ils vraiment 100% naturels ?
+                    </h4>
+                    <p class="text-stone-600 text-sm">
+                        Oui, tous nos produits sont issus de l'agriculture biologique sans 
+                        additifs chimiques. Nous privilégions les méthodes traditionnelles.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <h4 class="font-semibold text-stone-800 mb-2">
+                        Comment payer ma commande ?
+                    </h4>
+                    <p class="text-stone-600 text-sm">
+                        Paiement à la livraison en espèces ou par virement bancaire. 
+                        Pas de paiement en ligne requis pour plus de simplicité.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-stone-800 mb-2">
+                        Proposez-vous des conseils d'utilisation ?
+                    </h4>
+                    <p class="text-stone-600 text-sm">
+                        Bien sûr ! Notre équipe vous conseille sur l'utilisation optimale 
+                        de chaque produit selon vos besoins spécifiques.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-stone-800 mb-2">
+                        Puis-je retourner un produit ?
+                    </h4>
+                    <p class="text-stone-600 text-sm">
+                        Satisfaction garantie ou remboursement sous 7 jours. 
+                        Contactez-nous en cas de problème avec votre commande.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Réseaux sociaux -->
+    <div class="bg-gradient-to-r from-olive-600 to-sage-600 text-white rounded-lg p-8 text-center">
+        <h2 class="text-2xl font-bold mb-4">
+            🌐 Suivez-nous sur les Réseaux Sociaux
+        </h2>
+        <p class="mb-6 text-stone-100">
+            Restez informé de nos nouveautés, conseils et témoignages clients.
+        </p>
+        
+        <div class="flex justify-center space-x-6">
+            <a href="#" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors">
+                <i class="fab fa-facebook-f text-xl"></i>
+            </a>
+            <a href="#" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors">
+                <i class="fab fa-instagram text-xl"></i>
+            </a>
+            <a href="#" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors">
+                <i class="fab fa-whatsapp text-xl"></i>
+            </a>
+            <a href="#" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors">
+                <i class="fab fa-youtube text-xl"></i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Call to Action -->
+    <div class="mt-16 text-center">
+        <div class="bg-olive-50 border border-olive-200 rounded-lg p-8">
+            <h2 class="text-2xl font-bold text-olive-800 mb-4">
+                💬 Une Question ? Nous Sommes Là !
+            </h2>
+            <p class="text-olive-700 mb-6">
+                N'hésitez pas à nous contacter pour toute question sur nos produits, 
+                votre commande ou simplement pour discuter de bien-être naturel.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://wa.me/212600000000" target="_blank"
+                   class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                    <i class="fab fa-whatsapp mr-2"></i>
+                    Contacter sur WhatsApp
+                </a>
+                
+                <a href="{% url 'order_create' %}" 
+                   class="bg-olive-600 hover:bg-olive-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-shopping-cart mr-2"></i>
+                    Passer une commande
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

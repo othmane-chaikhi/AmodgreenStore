@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Inscription - AmodGreen{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-olive-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-user-plus text-2xl text-white"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-stone-800 mb-2">Rejoindre AmodGreen</h1>
+        <p class="text-stone-600">
+            Créez votre compte pour rejoindre notre communauté de passionnés de produits naturels
+        </p>
+    </div>
+    
+    <!-- Formulaire d'inscription -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Nom d'utilisateur et email -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-2">
+                        {{ form.username.label }}
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-stone-500 mt-1">
+                        Nom d'utilisateur unique pour votre profil
+                    </p>
+                </div>
+                
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-2">
+                        {{ form.email.label }}
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Prénom et nom -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-2">
+                        {{ form.first_name.label }}
+                    </label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-2">
+                        {{ form.last_name.label }}
+                    </label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Téléphone et ville -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-2">
+                        {{ form.phone.label }} <span class="text-stone-400">(optionnel)</span>
+                    </label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-2">
+                        {{ form.city.label }} <span class="text-stone-400">(optionnel)</span>
+                    </label>
+                    {{ form.city }}
+                    {% if form.city.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.city.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Mots de passe -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-2">
+                        {{ form.password1.label }}
+                    </label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-2">
+                        {{ form.password2.label }}
+                    </label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Erreurs générales du formulaire -->
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                    {% for error in form.non_field_errors %}
+                        <p class="text-red-600 text-sm">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- Conditions d'utilisation -->
+            <div class="bg-stone-50 border border-stone-200 rounded-lg p-4">
+                <p class="text-sm text-stone-600">
+                    <i class="fas fa-info-circle mr-2 text-stone-500"></i>
+                    En créant un compte, vous acceptez de respecter les règles de notre communauté et de partager des contenus authentiques et respectueux.
+                </p>
+            </div>
+            
+            <button type="submit" 
+                    class="w-full bg-olive-600 hover:bg-olive-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                <i class="fas fa-user-plus mr-2"></i>
+                Créer mon compte
+            </button>
+        </form>
+        
+        <!-- Liens utiles -->
+        <div class="mt-6 text-center space-y-2">
+            <p class="text-stone-600">
+                Déjà un compte ?
+                <a href="{% url 'login' %}" class="text-olive-600 hover:text-olive-700 font-medium">
+                    Se connecter
+                </a>
+            </p>
+            
+            <p class="text-sm text-stone-500">
+                <a href="{% url 'home' %}" class="hover:text-stone-700">
+                    ← Retour à l'accueil
+                </a>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Avantages de l'inscription -->
+    <div class="mt-8 bg-olive-50 border border-olive-200 rounded-lg p-6">
+        <h3 class="font-semibold text-olive-800 mb-4">
+            <i class="fas fa-heart mr-2"></i>
+            Pourquoi rejoindre notre communauté ?
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex items-start">
+                <i class="fas fa-comments mr-3 mt-1 text-olive-600"></i>
+                <div>
+                    <div class="font-medium text-olive-800">Partagez vos expériences</div>
+                    <div class="text-sm text-olive-700">Témoignages, avis produits, conseils d'utilisation</div>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <i class="fas fa-users mr-3 mt-1 text-olive-600"></i>
+                <div>
+                    <div class="font-medium text-olive-800">Communauté bienveillante</div>
+                    <div class="text-sm text-olive-700">Échanges respectueux entre passionnés de naturel</div>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <i class="fas fa-leaf mr-3 mt-1 text-olive-600"></i>
+                <div>
+                    <div class="font-medium text-olive-800">Produits authentiques</div>
+                    <div class="text-sm text-olive-700">Découvrez les bienfaits de nos produits naturels</div>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <i class="fas fa-handshake mr-3 mt-1 text-olive-600"></i>
+                <div>
+                    <div class="font-medium text-olive-800">Commerce équitable</div>
+                    <div class="text-sm text-olive-700">Soutenez les producteurs locaux marocains</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Style pour les champs de formulaire */
+input[type="text"], input[type="email"], input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+    outline: none;
+    border-color: #8a9b5d;
+    box-shadow: 0 0 0 3px rgba(138, 155, 93, 0.1);
+}
+</style>
+{% endblock %}

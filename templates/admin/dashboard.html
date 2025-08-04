@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto py-6">
+    <h1 class="text-2xl font-bold mb-4">Tableau de bord Admin</h1>
+
+    <h2 class="text-xl font-semibold mt-6 mb-2">Commandes</h2>
+    <table class="w-full table-auto border">
+        <thead><tr><th>Nom</th><th>Produit</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for order in orders %}
+        <tr class="border-t">
+            <td>{{ order.full_name }}</td>
+            <td>{{ order.product.name }}</td>
+            <td>{{ order.get_status_display }}</td>
+            <td>
+                <a href="{% url 'update_order_status' order.id 'confirmed' %}" class="text-green-600">Confirmer</a> |
+                <a href="{% url 'update_order_status' order.id 'cancelled' %}" class="text-red-600">Annuler</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 class="text-xl font-semibold mt-6 mb-2">Commentaires</h2>
+    <ul>
+        {% for comment in comments %}
+            <li class="mb-2">
+                {{ comment.content|truncatewords:10 }} - par {{ comment.author.username }}
+                {% if comment.is_approved %}
+                    <span class="text-green-500">(Approuvé)</span>
+                {% else %}
+                    <span class="text-red-500">(Non approuvé)</span>
+                {% endif %}
+                <a href="{% url 'toggle_comment_approval' comment.id %}" class="ml-2 text-blue-600">Changer statut</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-6 mb-2">Produits</h2>
+    <ul>
+        {% for product in products %}
+            <li>{{ product.name }} - {{ product.price }} MAD</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

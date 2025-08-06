@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from urllib.parse import quote
 from .models import Product, Category, Order, CommunityPost, Comment, CustomUser, Order, OrderItem ,Cart
 from .forms import OrderForm, CustomUserCreationForm, CommunityPostForm, CommentForm, UserProfileForm
+from .utils import get_or_create_cart
 
 def home(request):
     """Page d'accueil"""
@@ -91,8 +92,9 @@ def product_detail(request, pk):
     return render(request, 'store/product_detail.html', context)
 
 def order_create(request):
-    """Créer une commande avec tous les produits du panier"""
-    cart = getattr(request.user, 'cart', None)
+    """Create an order from cart contents (no login required)"""
+    cart = get_or_create_cart(request)
+    
     if not cart or not cart.items.exists():
         messages.warning(request, "Votre panier est vide.")
         return redirect('view_cart')
@@ -100,11 +102,15 @@ def order_create(request):
     if request.method == 'POST':
         form = OrderForm(request.POST)
         if form.is_valid():
-            # Créer la commande sans produit/quantité
             order = form.save(commit=False)
+            
+            # If user is logged in, associate the order with them
+            if request.user.is_authenticated:
+                order.user = request.user
+            
             order.save()
 
-            # Créer les OrderItems
+            # Create order items
             for item in cart.items.all():
                 OrderItem.objects.create(
                     order=order,
@@ -113,10 +119,12 @@ def order_create(request):
                     price=item.product.price,
                 )
 
-            # Vider le panier
+            # Clear the cart
             cart.items.all().delete()
+            if not request.user.is_authenticated:
+                cart.delete()
 
-            # Message WhatsApp
+            # Prepare WhatsApp message
             admin_phone = settings.ADMIN_WHATSAPP_NUMBER
             message = generate_order_message(order)
             whatsapp_url = f"https://wa.me/{admin_phone}?text={quote(message)}"
@@ -135,25 +143,27 @@ def order_create(request):
     })
 
 def generate_order_message(order):
-    """Message WhatsApp regroupant tous les articles de la commande"""
+    """Generate WhatsApp message for order confirmation"""
     items_text = "\n".join(
-        [f"📦 {item.quantity}x {item.product.name} ({item.price} MAD)" for item in order.items.all()]
+        [f"📦 {item.quantity}x {item.product.name} ({item.price} MAD)" 
+         for item in order.items.all()]
     )
-    total = sum([item.quantity * item.price for item in order.items.all()])
+    total = sum(item.quantity * item.price for item in order.items.all())
+    
     return f"""🌿 *Nouvelle commande AmodGreen* 🌿
 
-    👤 *Client:* {order.full_name}
-    📱 *Téléphone:* {order.phone}
-    🏙️ *Ville:* {order.city}
-    📍 *Adresse:* {order.address}
+👤 *Client:* {order.full_name}
+📱 *Téléphone:* {order.phone}
+🏙️ *Ville:* {order.city}
+📍 *Adresse:* {order.address}
 
-    🛒 *Articles:*
-    {items_text}
+🛒 *Articles:*
+{items_text}
 
-    💰 *Total:* {total} MAD
-    📝 *Remarques:* {order.notes if order.notes else 'Aucune'}
+💰 *Total:* {total} MAD
+📝 *Remarques:* {order.notes if order.notes else 'Aucune'}
 
-    _Commande #_{order.id} - {order.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
+_Commande #{order.id} - {order.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
 
 def register_view(request):
     """Inscription d'un nouvel utilisateur"""

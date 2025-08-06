@@ -29,8 +29,8 @@
             <div class="mt-2 text-gray-600 font-semibold">Commandes livrées</div>
         </div>
         <div class="bg-white rounded shadow p-4 text-center">
-            <a href="{% url 'product_create' %}" 
-               class="inline-block bg-olive-600 hover:bg-olive-700 text-white px-4 py-2 rounded font-semibold transition">
+            <a href="{% url 'product_create' %}"
+                class="inline-block bg-olive-600 hover:bg-olive-700 text-white px-4 py-2 rounded font-semibold transition">
                 <i class="fas fa-plus mr-2"></i> Ajouter un produit
             </a>
         </div>
@@ -55,16 +55,17 @@
                     <td class="border border-gray-300 px-4 py-2">{{ product.price }}</td>
                     <td class="border border-gray-300 px-4 py-2">
                         {% if product.is_available %}
-                            <span class="text-green-600 font-semibold">Oui</span>
+                        <span class="text-green-600 font-semibold">Oui</span>
                         {% else %}
-                            <span class="text-red-600 font-semibold">Non</span>
+                        <span class="text-red-600 font-semibold">Non</span>
                         {% endif %}
                     </td>
                     <td class="border border-gray-300 px-4 py-2 space-x-4">
                         <a href="{% url 'product_update' product.id %}" class="text-blue-600 hover:underline">
                             <i class="fas fa-edit"></i> Modifier
                         </a>
-                        <a href="{% url 'product_delete' product.id %}" class="text-red-600 hover:underline" onclick="return confirm('Confirmer la suppression ?');">
+                        <a href="{% url 'product_delete' product.id %}" class="text-red-600 hover:underline"
+                            onclick="return confirm('Confirmer la suppression ?');">
                             <i class="fas fa-trash-alt"></i> Supprimer
                         </a>
                     </td>
@@ -90,7 +91,7 @@
             <thead>
                 <tr class="bg-gray-100">
                     <th class="border border-gray-300 px-4 py-2 text-left">Client</th>
-                    <th class="border border-gray-300 px-4 py-2 text-left">Produit</th>
+                    <th class="border border-gray-300 px-4 py-2 text-left">Produits</th>
                     <th class="border border-gray-300 px-4 py-2 text-left">Statut</th>
                     <th class="border border-gray-300 px-4 py-2 text-left">Actions</th>
                 </tr>
@@ -99,26 +100,37 @@
                 {% for order in orders %}
                 <tr class="hover:bg-gray-50">
                     <td class="border border-gray-300 px-4 py-2">{{ order.full_name }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ order.product.name }}</td>
+                    <td>
+                        {% for item in order.items.all %}
+                        {{ item.product.name }} (x{{ item.quantity }}){% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+
                     <td class="border border-gray-300 px-4 py-2">{{ order.get_status_display }}</td>
                     <td class="border border-gray-300 px-4 py-2 space-x-2">
                         {% if order.status == 'pending' %}
-                                <a href="{% url 'order_detail' order.id %}" class="text-green-600 hover:underline">Voir commande</a> |
-                                <a href="{% url 'update_order_status' order.id 'cancelled' %}" class="text-red-600 hover:underline">Annuler</a>
+                        <a href="{% url 'order_detail' order.id %}" class="text-green-600 hover:underline">Voir
+                            commande</a> |
+                        <a href="{% url 'update_order_status' order.id 'cancelled' %}"
+                            class="text-red-600 hover:underline">Annuler</a>
                         {% elif order.status == 'contacted' %}
-                            <a href="{% url 'update_order_status' order.id 'in_progress' %}" class="text-blue-600 hover:underline">Commande en cours</a> |
-                            <a href="{% url 'update_order_status' order.id 'cancelled' %}" class="text-red-600 hover:underline">Annuler</a>
+                        <a href="{% url 'update_order_status' order.id 'in_progress' %}"
+                            class="text-blue-600 hover:underline">Commande en cours</a> |
+                        <a href="{% url 'update_order_status' order.id 'cancelled' %}"
+                            class="text-red-600 hover:underline">Annuler</a>
                         {% elif order.status == 'in_progress' %}
-                            <a href="{% url 'update_order_status' order.id 'delivered' %}" class="text-green-700 hover:underline">Commande livrée</a>
+                        <a href="{% url 'update_order_status' order.id 'delivered' %}"
+                            class="text-green-700 hover:underline">Commande livrée</a>
                         {% endif %}
-                        </td>
-                        <td class="border border-gray-300 px-4 py-2 space-x-2">
-                            <a href="{% url 'order_detail' order.id %}" class="text-green-600 hover:underline">Voir</a> |
-                            <a href="{% url 'delete_order' order.id %}" class="text-red-600 hover:underline"
-                                onclick="return confirm('Supprimer cette commande ?');">
-                                Supprimer
-                            </a>
-                        </td>   </tr>
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2 space-x-2">
+                        <a href="{% url 'order_detail' order.id %}" class="text-green-600 hover:underline">Voir</a> |
+                        <a href="{% url 'delete_order' order.id %}" class="text-red-600 hover:underline"
+                            onclick="return confirm('Supprimer cette commande ?');">
+                            Supprimer
+                        </a>
+                    </td>
+                </tr>
                 {% empty %}
                 <tr>
                     <td colspan="4" class="text-center py-4 text-gray-500">Aucune commande récente.</td>

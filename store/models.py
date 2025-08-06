@@ -83,8 +83,8 @@ class Order(models.Model):
     phone = models.CharField(max_length=20, verbose_name="Numéro de téléphone")
     city = models.CharField(max_length=100, verbose_name="Ville")
     address = models.TextField(verbose_name="Adresse complète")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Produit")
-    quantity = models.PositiveIntegerField(default=1, verbose_name="Quantité")
+    # product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Produit")
+    # quantity = models.PositiveIntegerField(default=1, verbose_name="Quantité")
     notes = models.TextField(blank=True, verbose_name="Remarques")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Statut")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de commande")
@@ -99,25 +99,28 @@ class Order(models.Model):
     
     @property
     def total_price(self):
-        return self.product.price * self.quantity
-    
+        return sum(item.price * item.quantity for item in self.items.all())
+
     def get_whatsapp_message(self):
-        """Génère le message WhatsApp pour la commande"""
         message = f"""🌿 *Nouvelle commande AmodGreen* 🌿
 
-👤 *Client:* {self.full_name}
-📱 *Téléphone:* {self.phone}
-🏙️ *Ville:* {self.city}
-📍 *Adresse:* {self.address}
+        👤 *Client:* {self.full_name}
+        📱 *Téléphone:* {self.phone}
+        🏙️ *Ville:* {self.city}
+        📍 *Adresse:* {self.address}
 
-🛒 *Produit:* {self.product.name}
-📦 *Quantité:* {self.quantity}
-💰 *Prix total:* {self.total_price} MAD
+        🛒 *Produits commandés:*
+        """
+        for item in self.items.all():
+            message += f"• {item.product.name} x{item.quantity} ({item.price} MAD)\n"
 
-📝 *Remarques:* {self.notes if self.notes else 'Aucune'}
-
-_Commande #_{self.id} - {self.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
+            message += f"""
+            💰 *Prix total:* {self.total_price} MAD
+            📝 *Remarques:* {self.notes if self.notes else 'Aucune'}
+_           Commande #_{self.id} - {self.created_at.strftime('%d/%m/%Y à %H:%M')}_
+            """
         return message
+
 
 
 class CommunityPost(models.Model):
@@ -164,3 +167,36 @@ class Comment(models.Model):
     
     def __str__(self):
         return f"Commentaire de {self.author.username} sur {self.post.title}"
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class Cart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def total_price(self):
+        return sum(item.total_price() for item in self.items.all())
+
+    def __str__(self):
+        return f"Panier de {self.user.username}"
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def total_price(self):
+        return self.product.price * self.quantity
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name}"
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, related_name="items", on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.product.name} x{self.quantity}"

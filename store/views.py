@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.http import JsonResponse
 from urllib.parse import quote
-from .models import Product, Category, Order, CommunityPost, Comment, CustomUser
+from .models import Product, Category, Order, CommunityPost, Comment, CustomUser, Order, OrderItem ,Cart
 from .forms import OrderForm, CustomUserCreationForm, CommunityPostForm, CommentForm, UserProfileForm
 from django.conf import settings
 
@@ -33,7 +33,6 @@ def home(request):
         'total_categories': total_categories,
     }
     return render(request, 'store/home.html', context)
-
 
 def product_list(request):
     """Liste des produits avec filtres"""
@@ -67,7 +66,6 @@ def product_list(request):
     }
     return render(request, 'store/product_list.html', context)
 
-
 def product_detail(request, pk):
     """Détail d'un produit"""
     product = get_object_or_404(Product, pk=pk, is_available=True)
@@ -92,49 +90,70 @@ def product_detail(request, pk):
     }
     return render(request, 'store/product_detail.html', context)
 
-
-from django.conf import settings  # importer les settings
-
 def order_create(request):
-    """Créer une nouvelle commande"""
+    """Créer une commande avec tous les produits du panier"""
+    cart = getattr(request.user, 'cart', None)
+    if not cart or not cart.items.exists():
+        messages.warning(request, "Votre panier est vide.")
+        return redirect('cart')
+
     if request.method == 'POST':
         form = OrderForm(request.POST)
         if form.is_valid():
-            order = form.save()
+            # Créer la commande sans produit/quantité
+            order = form.save(commit=False)
+            order.save()
 
-            # Utiliser le numéro WhatsApp de l'admin (et non du client)
-            admin_phone = settings.ADMIN_WHATSAPP_NUMBER  # format: 2126xxxxxxx
+            # Créer les OrderItems
+            for item in cart.items.all():
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    price=item.product.price,
+                )
 
-            # Message à envoyer (fonction que tu définis dans le modèle Order)
-            message = order.get_whatsapp_message()
+            # Vider le panier
+            cart.items.all().delete()
 
-            # Lien WhatsApp vers l’admin
+            # Message WhatsApp
+            admin_phone = settings.ADMIN_WHATSAPP_NUMBER
+            message = generate_order_message(order)
             whatsapp_url = f"https://wa.me/{admin_phone}?text={quote(message)}"
 
             messages.success(request, 'Votre commande a été envoyée avec succès !')
-
             return render(request, 'store/order_success.html', {
                 'order': order,
                 'whatsapp_url': whatsapp_url
             })
     else:
-        # Pré-remplir le produit si spécifié dans l'URL
-        product_id = request.GET.get('product')
-        initial_data = {}
-        if product_id:
-            try:
-                product = Product.objects.get(pk=product_id, is_available=True)
-                initial_data['product'] = product
-            except Product.DoesNotExist:
-                pass
+        form = OrderForm()
 
-        form = OrderForm(initial=initial_data)
-
-    context = {
+    return render(request, 'store/order_form.html', {
         'form': form,
-        'products': Product.objects.filter(is_available=True),
-    }
-    return render(request, 'store/order_form.html', context)
+        'cart': cart,
+    })
+
+def generate_order_message(order):
+    """Message WhatsApp regroupant tous les articles de la commande"""
+    items_text = "\n".join(
+        [f"📦 {item.quantity}x {item.product.name} ({item.price} MAD)" for item in order.items.all()]
+    )
+    total = sum([item.quantity * item.price for item in order.items.all()])
+    return f"""🌿 *Nouvelle commande AmodGreen* 🌿
+
+    👤 *Client:* {order.full_name}
+    📱 *Téléphone:* {order.phone}
+    🏙️ *Ville:* {order.city}
+    📍 *Adresse:* {order.address}
+
+    🛒 *Articles:*
+    {items_text}
+
+    💰 *Total:* {total} MAD
+    📝 *Remarques:* {order.notes if order.notes else 'Aucune'}
+
+    _Commande #_{order.id} - {order.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
 
 def register_view(request):
     """Inscription d'un nouvel utilisateur"""
@@ -149,9 +168,6 @@ def register_view(request):
         form = CustomUserCreationForm()
     
     return render(request, 'registration/register.html', {'form': form})
-
-
-from django.core.paginator import Paginator
 
 def community(request):
     """Page communauté avec posts filtrés, pagination et formulaires pour utilisateur connecté."""
@@ -181,8 +197,6 @@ def community(request):
     }
     return render(request, 'store/community.html', context)
 
-
-
 @login_required
 def create_post(request):
     """Créer un nouveau post communauté"""
@@ -196,7 +210,6 @@ def create_post(request):
             return redirect('community')
     
     return redirect('community')
-
 
 @login_required
 def add_comment(request, post_id):
@@ -212,7 +225,6 @@ def add_comment(request, post_id):
             messages.success(request, 'Votre commentaire a été soumis et sera publié après modération.')
     
     return redirect('community')
-
 
 @login_required
 def profile(request):
@@ -234,11 +246,9 @@ def profile(request):
     }
     return render(request, 'store/profile.html', context)
 
-
 def about(request):
     """Page à propos"""
     return render(request, 'store/about.html')
-
 
 def contact(request):
     """Page contact"""

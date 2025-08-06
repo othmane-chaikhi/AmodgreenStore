@@ -63,12 +63,12 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     """Admin pour les commandes"""
-    list_display = ('id', 'full_name', 'phone', 'product', 'quantity', 'total_price_display', 'status', 'created_at')
-    list_filter = ('status', 'created_at', 'product__category')
-    search_fields = ('full_name', 'phone', 'city', 'product__name')
-    readonly_fields = ('created_at', 'total_price_display', 'whatsapp_link')
-    list_editable = ('status',)
+    list_display = ('id', 'full_name', 'phone', 'status', 'produits_commandes', 'created_at')
+    # list_display = ('id', 'full_name', 'phone', 'city', 'status', 'created_at')
+    list_filter = ('status', 'created_at')  # supprimé: 'product__category'
+    search_fields = ('full_name', 'phone', 'city')
     date_hierarchy = 'created_at'
+
     
     fieldsets = (
         ('Informations client', {
@@ -85,7 +85,10 @@ class OrderAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+    def produits_commandes(self, obj):
+        return ", ".join([f"{item.product.name} x{item.quantity}" for item in obj.items.all()])
+    produits_commandes.short_description = "Produits"
+
     def total_price_display(self, obj):
         return f"{obj.total_price} MAD"
     total_price_display.short_description = "Prix total"

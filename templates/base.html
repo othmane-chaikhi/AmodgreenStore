@@ -103,11 +103,15 @@
                         </a>
                     {% endif %}
                     
-                    <a href="{% url 'order_create' %}" class="bg-sage-600 hover:bg-sage-700 text-white px-4 py-2 rounded transition-colors">
-                        <i class="fas fa-shopping-cart"></i> Commander
-                    </a>
                 </div>
-                
+                 <div class="flex items-center space-x-6">
+        <a href="{% url 'view_cart' %}" class="relative text-gray-700 hover:text-green-700">
+            🛒
+            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-1">
+                {{ request.user.cart.items.count|default:0 }}
+            </span>
+        </a>
+    </div>
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
                     <button type="button" class="text-stone-500 hover:text-stone-700" onclick="toggleMobileMenu()">
@@ -218,5 +222,34 @@
             }
         });
     </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const buttons = document.querySelectorAll('.add-to-cart-btn');
+
+    buttons.forEach(button => {
+        button.addEventListener('click', function () {
+            const productId = this.getAttribute('data-product-id');
+
+            fetch(`/cart/add/${productId}/`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Produit ajouté au panier !');
+                    // Optionnel : mettre à jour un compteur panier
+                    document.getElementById('cart-count')?.textContent = data.cart_count;
+                } else {
+                    alert('Erreur lors de l’ajout au panier.');
+                }
+            });
+        });
+    });
+});
+</script>
+
 </body>
 </html>

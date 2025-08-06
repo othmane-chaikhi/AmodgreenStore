@@ -5,23 +5,45 @@
 <div class="container mx-auto p-6">
     <h1 class="text-2xl font-bold mb-4">Détail de la commande #{{ order.id }}</h1>
 
-    <p><strong>Client :</strong> {{ order.full_name }}</p>
-    <p><strong>Produit :</strong> {{ order.product.name }}</p>
-    <p><strong>Status :</strong> {{ order.get_status_display }}</p>
-    <p><strong>Quantité :</strong> {{ order.quantity }}</p>
-    <p><strong>Adresse :</strong> {{ order.address }}</p>
-    <!-- ajoute d'autres infos si besoin -->
+    <!-- 🧾 Informations client -->
+    <div class="bg-gray-100 p-4 rounded shadow mb-6">
+        <h2 class="text-xl font-semibold mb-2">Informations du client</h2>
+        <p><strong>Nom complet :</strong> {{ order.full_name }}</p>
+        <p><strong>Numéro de téléphone :</strong> {{ order.phone }}</p>
+        <p><strong>Ville :</strong> {{ order.city }}</p>
+        <p><strong>Adresse :</strong> {{ order.address }}</p>
+        {% if order.notes %}
+            <p><strong>Remarques :</strong> {{ order.notes }}</p>
+        {% endif %}
+    </div>
 
-    <form method="post" class="mt-6">
+    <!-- 📦 Détails produits -->
+    <div class="bg-white p-4 rounded shadow mb-6">
+        <h2 class="text-xl font-semibold mb-2">Produits commandés</h2>
+        <ul class="list-disc ml-6">
+            {% for item in order.items.all %}
+                <li>{{ item.product.name }} - {{ item.quantity }} x {{ item.price }} MAD</li>
+            {% endfor %}
+        </ul>
+        <p class="mt-4 font-semibold">💰 Prix total : {{ order.total_price }} MAD</p>
+    </div>
+
+    <!-- 🚚 Statut -->
+    <p class="mb-4"><strong>Statut actuel :</strong> 
+        <span class="px-2 py-1 rounded bg-gray-200 text-gray-800">{{ order.get_status_display }}</span>
+    </p>
+
+    <!-- ✅ Actions -->
+    <form method="post" class="mt-6 flex gap-4">
         {% csrf_token %}
-        <button name="action" value="confirm" class="bg-green-600 text-white px-4 py-2 rounded mr-4">
-            Confirmer la commande
+        <button name="action" value="confirm" class="bg-green-600 text-white px-4 py-2 rounded">
+            ✅ Confirmer la commande
         </button>
         <button name="action" value="cancel" class="bg-red-600 text-white px-4 py-2 rounded">
-            Annuler la commande
+            ❌ Annuler la commande
         </button>
     </form>
 
-    <a href="{% url 'admin_dashboard' %}" class="inline-block mt-4 text-blue-600 hover:underline">Retour au tableau de bord</a>
+    <a href="{% url 'admin_dashboard' %}" class="inline-block mt-6 text-blue-600 hover:underline">← Retour au tableau de bord</a>
 </div>
 {% endblock %}

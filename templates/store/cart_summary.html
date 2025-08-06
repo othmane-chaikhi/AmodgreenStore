@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md mt-10">
+    <h2 class="text-3xl font-bold text-green-700 mb-6 text-center">🛒 Récapitulatif de votre panier</h2>
+
+    {% if cart.items.all %}
+        <ul class="divide-y divide-gray-200 mb-6">
+            {% for item in cart.items.all %}
+                <li class="py-4 flex justify-between items-center">
+                    <div>
+                        <p class="text-lg font-medium text-gray-800">{{ item.product.name }}</p>
+                        <p class="text-sm text-gray-500">{{ item.quantity }} x {{ item.product.price }} MAD</p>
+                    </div>
+                    <p class="text-lg font-semibold text-green-700">{{ item.total_price }} MAD</p>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div class="flex justify-between items-center text-xl font-bold text-green-800 border-t pt-4">
+            <span>Total :</span>
+            <span>{{ cart.total_price }} MAD</span>
+        </div>
+
+        <div class="mt-8 text-center">
+            <a href="{% url 'order_create' %}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition">
+                ✅ Passer la commande
+            </a>
+        </div>
+    {% else %}
+        <div class="text-center text-gray-500 text-lg">
+            Votre panier est vide pour le moment.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

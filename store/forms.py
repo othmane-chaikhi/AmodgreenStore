@@ -48,19 +48,18 @@ class CustomUserCreationForm(UserCreationForm):
 
 class OrderForm(forms.ModelForm):
     """Formulaire de commande"""
-    
+
     class Meta:
         model = Order
-        fields = ['full_name', 'phone', 'city', 'address', 'product', 'quantity', 'notes']
+        fields = ['full_name', 'phone', 'city', 'address', 'notes']
         widgets = {
             'full_name': forms.TextInput(attrs={'placeholder': 'Nom et prénom complets'}),
             'phone': forms.TextInput(attrs={'placeholder': '06XXXXXXXX ou +212XXXXXXXX'}),
             'city': forms.TextInput(attrs={'placeholder': 'Votre ville'}),
             'address': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Adresse complète de livraison'}),
             'notes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Remarques ou instructions spéciales (optionnel)'}),
-            'quantity': forms.NumberInput(attrs={'min': 1, 'value': 1}),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -72,27 +71,16 @@ class OrderForm(forms.ModelForm):
             ),
             Row(
                 Column('city', css_class='form-group col-md-6 mb-3'),
-                Column('quantity', css_class='form-group col-md-6 mb-3'),
+                Column('address', css_class='form-group col-md-6 mb-3'),
                 css_class='form-row'
             ),
-            'product',
-            'address',
             'notes',
             Submit('submit', '🛒 Envoyer ma commande', css_class='w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg')
         )
-        
-        # Personnaliser les classes CSS des champs
-        for field_name, field in self.fields.items():
-            if field_name == 'product':
-                field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-            elif field_name == 'quantity':
-                field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-            else:
-                field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-        
-        # Filtrer seulement les produits disponibles
-        self.fields['product'].queryset = self.fields['product'].queryset.filter(is_available=True)
 
+        # Personnaliser les champs
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
 
 class CommunityPostForm(forms.ModelForm):
     """Formulaire pour créer un post dans la communauté"""

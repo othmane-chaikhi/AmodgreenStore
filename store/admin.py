@@ -19,14 +19,12 @@ class CustomUserAdmin(UserAdmin):
         }),
     )
 
-
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     """Admin pour les catégories"""
     list_display = ('name', 'name_ar', 'created_at')
     search_fields = ('name', 'name_ar')
     readonly_fields = ('created_at',)
-
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -59,46 +57,38 @@ class ProductAdmin(admin.ModelAdmin):
         return "Pas d'image"
     image_preview.short_description = "Aperçu"
 
-
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     """Admin pour les commandes"""
+    readonly_fields = ['created_at']
     list_display = ('id', 'full_name', 'phone', 'status', 'produits_commandes', 'created_at')
-    # list_display = ('id', 'full_name', 'phone', 'city', 'status', 'created_at')
-    list_filter = ('status', 'created_at')  # supprimé: 'product__category'
+    list_filter = ('status', 'created_at')
     search_fields = ('full_name', 'phone', 'city')
     date_hierarchy = 'created_at'
 
-    
+
     fieldsets = (
         ('Informations client', {
             'fields': ('full_name', 'phone', 'city', 'address')
         }),
-        ('Commande', {
-            'fields': ('product', 'quantity', 'total_price_display', 'notes')
-        }),
         ('Statut et actions', {
-            'fields': ('status', 'whatsapp_link')
+            'fields': ('status',)
         }),
         ('Informations système', {
             'fields': ('created_at',),
             'classes': ('collapse',)
         }),
     )
+
     def produits_commandes(self, obj):
         return ", ".join([f"{item.product.name} x{item.quantity}" for item in obj.items.all()])
     produits_commandes.short_description = "Produits"
 
-    def total_price_display(self, obj):
-        return f"{obj.total_price} MAD"
-    total_price_display.short_description = "Prix total"
-    
     def whatsapp_link(self, obj):
         if obj.phone:
-            # Nettoyer le numéro de téléphone
             phone = obj.phone.replace(' ', '').replace('-', '').replace('+', '')
             if phone.startswith('0'):
-                phone = '212' + phone[1:]  # Remplacer 0 par 212 pour le Maroc
+                phone = '212' + phone[1:]
             elif not phone.startswith('212'):
                 phone = '212' + phone
             
@@ -107,7 +97,6 @@ class OrderAdmin(admin.ModelAdmin):
             return format_html('<a href="{}" target="_blank" class="button">Contacter via WhatsApp</a>', whatsapp_url)
         return "Numéro invalide"
     whatsapp_link.short_description = "Action WhatsApp"
-
 
 @admin.register(CommunityPost)
 class CommunityPostAdmin(admin.ModelAdmin):
@@ -142,7 +131,6 @@ class CommunityPostAdmin(admin.ModelAdmin):
         queryset.update(is_approved=False)
         self.message_user(request, f"{queryset.count()} posts désapprouvés.")
     unapprove_posts.short_description = "Désapprouver les posts sélectionnés"
-
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):

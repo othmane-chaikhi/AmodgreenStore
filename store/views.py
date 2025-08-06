@@ -4,12 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.conf import settings
 from django.urls import reverse
 from django.http import JsonResponse
 from urllib.parse import quote
 from .models import Product, Category, Order, CommunityPost, Comment, CustomUser, Order, OrderItem ,Cart
 from .forms import OrderForm, CustomUserCreationForm, CommunityPostForm, CommentForm, UserProfileForm
-from django.conf import settings
 
 def home(request):
     """Page d'accueil"""
@@ -95,7 +95,7 @@ def order_create(request):
     cart = getattr(request.user, 'cart', None)
     if not cart or not cart.items.exists():
         messages.warning(request, "Votre panier est vide.")
-        return redirect('cart')
+        return redirect('view_cart')
 
     if request.method == 'POST':
         form = OrderForm(request.POST)

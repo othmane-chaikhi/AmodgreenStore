@@ -6,8 +6,6 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Breadcrumb -->
-    <a href="{% url 'add_to_cart' product.id %}" class="bg-olive-600 text-white px-4 py-2 rounded">Ajouter au panier</a>
-
     <nav class="mb-8 text-sm">
         <ol class="flex items-center space-x-2 text-stone-500">
             <li><a href="{% url 'home' %}" class="hover:text-olive-600">Accueil</a></li>
@@ -70,16 +68,12 @@
 
             <!-- Actions -->
             <div class="space-y-4 pt-6 border-t border-stone-200">
-                <a href="{% url 'order_create' %}?product={{ product.id }}"
+                <a href="{% url 'add_to_cart' product.id %}"
                     class="w-full bg-olive-600 hover:bg-olive-700 text-white text-center px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center">
                     <i class="fas fa-shopping-cart mr-3"></i>
-                    Commander ce produit
+                    Ajouter au panier
                 </a>
-                <a href="{% url 'add_to_cart' product.id %}"
-                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    ➕ Ajouter au panier
-                </a>
-
+            
                 <div class="grid grid-cols-2 gap-4">
                     <a href="{% url 'product_list' %}"
                         class="bg-stone-200 hover:bg-stone-300 text-stone-700 text-center px-6 py-3 rounded-lg font-medium transition-colors">

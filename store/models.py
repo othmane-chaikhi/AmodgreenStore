@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.urls import reverse
 from PIL import Image
-
+from django.contrib.auth import get_user_model
 
 class CustomUser(AbstractUser):
     """Modèle utilisateur personnalisé avec bio"""
@@ -13,7 +13,6 @@ class CustomUser(AbstractUser):
     class Meta:
         verbose_name = "Utilisateur"
         verbose_name_plural = "Utilisateurs"
-
 
 class Category(models.Model):
     """Catégorie de produits"""
@@ -29,7 +28,6 @@ class Category(models.Model):
     
     def __str__(self):
         return self.name
-
 
 class Product(models.Model):
     """Modèle produit"""
@@ -68,7 +66,6 @@ class Product(models.Model):
                 img.thumbnail(output_size)
                 img.save(self.image.path)
 
-
 class Order(models.Model):
     """Modèle commande"""
     STATUS_CHOICES = [
@@ -78,17 +75,21 @@ class Order(models.Model):
         ('delivered', 'Livrée'),
         ('cancelled', 'Annulée'),
     ]
-    
+    is_deleted = models.BooleanField(default=False)
     full_name = models.CharField(max_length=200, verbose_name="Nom complet")
     phone = models.CharField(max_length=20, verbose_name="Numéro de téléphone")
     city = models.CharField(max_length=100, verbose_name="Ville")
     address = models.TextField(verbose_name="Adresse complète")
-    # product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Produit")
-    # quantity = models.PositiveIntegerField(default=1, verbose_name="Quantité")
     notes = models.TextField(blank=True, verbose_name="Remarques")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Statut")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name="Statut"
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de commande")
     estimated_delivery_date = models.DateField(null=True, blank=True, verbose_name="Date de livraison estimée")
+
     class Meta:
         verbose_name = "Commande"
         verbose_name_plural = "Commandes"
@@ -104,24 +105,27 @@ class Order(models.Model):
     def get_whatsapp_message(self):
         message = f"""🌿 *Nouvelle commande AmodGreen* 🌿
 
-        👤 *Client:* {self.full_name}
-        📱 *Téléphone:* {self.phone}
-        🏙️ *Ville:* {self.city}
-        📍 *Adresse:* {self.address}
+👤 *Client:* {self.full_name}
+📱 *Téléphone:* {self.phone}
+🏙️ *Ville:* {self.city}
+📍 *Adresse:* {self.address}
 
-        🛒 *Produits commandés:*
-        """
+🛒 *Produits commandés:*
+"""
         for item in self.items.all():
             message += f"• {item.product.name} x{item.quantity} ({item.price} MAD)\n"
 
-            message += f"""
-            💰 *Prix total:* {self.total_price} MAD
-            📝 *Remarques:* {self.notes if self.notes else 'Aucune'}
-_           Commande #_{self.id} - {self.created_at.strftime('%d/%m/%Y à %H:%M')}_
-            """
+        message += f"""
+💰 *Prix total:* {self.total_price} MAD
+📝 *Remarques:* {self.notes if self.notes else 'Aucune'}
+_           Commande #{self.id} - {self.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
         return message
 
-
+    def delete(self, *args, **kwargs):
+        # Supprimer les éléments liés
+        self.items.all().delete()
+        # Supprimer la commande elle-même
+        super().delete(*args, **kwargs)
 
 class CommunityPost(models.Model):
     """Posts de la communauté"""
@@ -151,7 +155,6 @@ class CommunityPost(models.Model):
     def get_absolute_url(self):
         return reverse('community') + f'#post-{self.id}'
 
-
 class Comment(models.Model):
     """Commentaires sur les posts"""
     post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='comments', verbose_name="Post")
@@ -168,10 +171,7 @@ class Comment(models.Model):
     def __str__(self):
         return f"Commentaire de {self.author.username} sur {self.post.title}"
 
-from django.contrib.auth import get_user_model
-
 User = get_user_model()
-
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -193,7 +193,7 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity}x {self.product.name}"
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, related_name="items", on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=8, decimal_places=2)

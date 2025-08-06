@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.utils import timezone
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Field
-from .models import CustomUser, Order, CommunityPost, Comment
+from .models import CustomUser, Order, CommunityPost, Comment,Product,Category
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -44,7 +45,6 @@ class CustomUserCreationForm(UserCreationForm):
         # Personnaliser les classes CSS des champs
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-
 
 class OrderForm(forms.ModelForm):
     """Formulaire de commande"""
@@ -112,7 +112,6 @@ class CommunityPostForm(forms.ModelForm):
         self.fields['product'].required = False
         self.fields['product'].empty_label = "Aucun produit spécifique"
 
-
 class CommentForm(forms.ModelForm):
     """Formulaire pour commenter un post"""
     
@@ -132,7 +131,6 @@ class CommentForm(forms.ModelForm):
         )
         
         self.fields['content'].widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-
 
 class UserProfileForm(forms.ModelForm):
     """Formulaire pour modifier le profil utilisateur"""
@@ -167,8 +165,6 @@ class UserProfileForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
 
-from .models import Product
-
 class ProductForm(forms.ModelForm):
     """Formulaire pour ajouter ou modifier un produit"""
     
@@ -197,9 +193,6 @@ class ProductForm(forms.ModelForm):
         # Ajout de classes CSS personnalisées
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-from django import forms
-from django.utils import timezone
-from .models import Order
 
 class ConfirmOrderForm(forms.Form):
     delivery_date = forms.DateField(
@@ -207,3 +200,8 @@ class ConfirmOrderForm(forms.Form):
         widget=forms.DateInput(attrs={'type': 'date'}),
         initial=timezone.now().date()
     )
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name', 'name_ar', 'description']

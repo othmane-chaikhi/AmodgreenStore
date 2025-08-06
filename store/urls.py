@@ -1,7 +1,5 @@
 from django.urls import path
-from . import views
-from . import views_admin 
-from . import views_cart
+from . import views,views_admin,views_cart
 
 urlpatterns = [
     # Pages principales
@@ -32,13 +30,15 @@ urlpatterns = [
     # Admin dashboard & gestion
     path('admin-dashboard/', views_admin.admin_dashboard, name='admin_dashboard'),
     path('admin-dashboard/product/create/', views_admin.product_create, name='product_create'),
+    path('admin-dashboard/category/create/', views_admin.category_create, name='category_create'),
     path('admin-dashboard/order/<int:order_id>/<str:status>/', views_admin.update_order_status, name='update_order_status'),
     path('admin-dashboard/comment/<int:comment_id>/toggle/', views_admin.toggle_comment_approval, name='toggle_comment_approval'),
     path('admin-dashboard/product/<int:pk>/update/', views_admin.product_update, name='product_update'),
     path('admin-dashboard/product/<int:pk>/delete/', views_admin.product_delete, name='product_delete'),
     path('admin-dashboard/order/<int:order_id>/confirm/', views_admin.confirm_order, name='confirm_order'),
     path('admin-dashboard/order/<int:order_id>/', views_admin.order_detail, name='order_detail'),
-    path('admin-dashboard/order/<int:order_id>/delete/', views_admin.delete_order, name='delete_order'),
+    # path('admin-dashboard/order/<int:order_id>/delete/', views_admin.delete_order, name='delete_order'),
+    path('admin-dashboard/orders/delete/<int:order_id>/', views_admin.delete_order, name='delete_order'),
     path('admin-dashboard/export-orders/', views_admin.export_orders_excel, name='export_orders_excel'),
 
 ]

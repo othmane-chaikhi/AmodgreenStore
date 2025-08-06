@@ -1,0 +1,25 @@
+Date: 6/8/2025
+Time: 19:54
+Phone Number: +212631889579
+Message: Test de connexion AmodGreen
+--------------------
+Date: 6/8/2025
+Time: 20:2
+Phone Number: +212714900687
+Message: Test message from AmodGreen
+--------------------
+Date: 6/8/2025
+Time: 20:2
+Phone Number: +212714900687
+Message: Test message from AmodGreen
+--------------------
+Date: 6/8/2025
+Time: 20:6
+Phone Number: +212714900687
+Message: Test message from AmodGreen
+--------------------
+Date: 6/8/2025
+Time: 20:12
+Phone Number: +212714900687
+Message: 🛠️ DEBUG TEST - Please reply 'OK'
+--------------------

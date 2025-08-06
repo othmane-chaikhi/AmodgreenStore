@@ -93,6 +93,10 @@
             class="inline-block mb-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">
             📥 Exporter les commandes (.xlsx)
         </a>
+        <a href="{% url 'export_orders_pdf' %}"
+            class="inline-block mb-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">
+            📥 Exporter les commandes (.pdf)
+        </a>
 
         <table class="w-full table-auto border-collapse border border-gray-200">
             <thead>
@@ -131,7 +135,6 @@
                         {% endif %}
                     </td>
                     <td class="border border-gray-300 px-4 py-2 space-x-2">
-                        <a href="{% url 'order_detail' order.id %}" class="text-green-600 hover:underline">Voir</a> |
                         <form method="POST" action="{% url 'delete_order' order.id %}" class="inline"
                             onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette commande ?');">
                             {% csrf_token %}

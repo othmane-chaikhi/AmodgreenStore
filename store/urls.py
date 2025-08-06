@@ -39,6 +39,7 @@ urlpatterns = [
     path('admin-dashboard/order/<int:order_id>/', views_admin.order_detail, name='order_detail'),
     # path('admin-dashboard/order/<int:order_id>/delete/', views_admin.delete_order, name='delete_order'),
     path('admin-dashboard/orders/delete/<int:order_id>/', views_admin.delete_order, name='delete_order'),
-    path('admin-dashboard/export-orders/', views_admin.export_orders_excel, name='export_orders_excel'),
-
+    # path('admin-dashboard/export/excel', views_admin.export_orders_excel, name='export_orders_excel'),
+    path('admin-dashboard/export/pdf/', views_admin.export_orders_pdf, name='export_orders_pdf'),
+    path('admin-dashboard/export/excel/', views_admin.export_orders_excel, name='export_orders_excel'),
 ]

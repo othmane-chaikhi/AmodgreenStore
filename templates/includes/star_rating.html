@@ -1,0 +1,10 @@
+<div class="star-rating flex items-center">
+    {% for i in "12345" %}
+        {% if rating >= forloop.counter %}
+            <i class="fas fa-star text-yellow-400"></i>
+        {% else %}
+            <i class="far fa-star text-yellow-400"></i>
+        {% endif %}
+    {% endfor %}
+    <span class="ml-2 text-sm text-gray-600">{{ rating }}/5</span>
+</div>

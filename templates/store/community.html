@@ -5,7 +5,6 @@
 
 {% block content %}
 
-
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="text-center mb-12">
@@ -17,6 +16,16 @@
             et rejoignez notre communauté de passionnés de produits naturels.
         </p>
     </div>
+    
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 mb-4 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     
     <!-- Formulaire de nouveau post (si connecté) -->
     {% if user.is_authenticated %}
@@ -151,6 +160,18 @@
                             <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
                                 <i class="fas fa-star mr-1"></i>Avis
                             </span>
+                            {% if post.rating %}
+                            <span class="flex items-center text-sm text-stone-600">
+                                <span class="mr-1">{{ post.rating }}/5</span>
+                                {% for i in "12345" %}
+                                    {% if post.rating >= forloop.counter %}
+                                        <i class="fas fa-star text-yellow-500 text-xs"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-yellow-500 text-xs"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            {% endif %}
                         {% elif post.post_type == 'testimonial' %}
                             <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
                                 <i class="fas fa-heart mr-1"></i>Témoignage
@@ -174,7 +195,7 @@
                                 <i class="fas fa-leaf mr-2 text-olive-600"></i>
                                 <span class="text-sm text-stone-700">
                                     À propos de : 
-                                    <a href="{{ post.product.get_absolute_url }}" 
+                                    <a href="{% url 'product_detail' post.product.id %}" 
                                        class="font-medium text-olive-600 hover:text-olive-700">
                                         {{ post.product.name }}
                                     </a>

@@ -1,20 +1,22 @@
-from django.contrib.auth.decorators import user_passes_test,login_required
+from django.contrib.auth.decorators import user_passes_test, login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import HttpResponse
-from .forms import ProductForm,ConfirmOrderForm,CategoryForm
+
+from .forms import ProductForm, ConfirmOrderForm, CategoryForm
 from .models import Product, Order, CommunityPost, Comment
-from openpyxl.styles import Font, Alignment
+
 import openpyxl
+from openpyxl.styles import Font, Alignment
+
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib import colors
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+
+
 # Vérifie si l'utilisateur est superuser
 def admin_required(view_func):
     return user_passes_test(lambda u: u.is_authenticated and u.is_superuser)(view_func)
@@ -61,9 +63,6 @@ def toggle_comment_approval(request, comment_id):
         comment.is_approved = not comment.is_approved
         comment.save()
         return redirect('admin_dashboard')
-
-def admin_required(view_func):
-        return user_passes_test(lambda u: u.is_authenticated and u.is_superuser)(view_func)
 
 @admin_required
 def product_create(request):
@@ -193,6 +192,8 @@ def export_orders_excel(request):
     response['Content-Disposition'] = 'attachment; filename=commandes.xlsx'
     wb.save(response)
     return response
+
+@admin_required
 def export_orders_pdf(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=commandes.pdf'

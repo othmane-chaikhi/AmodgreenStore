@@ -1,26 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Product, Cart, CartItem  # Make sure to import Product
+
 from django.conf import settings
+from .models import Product, Cart, CartItem
 from .utils import get_or_create_cart
 
-def get_or_create_cart(request):
-    """Get or create a cart for authenticated or anonymous users"""
-    if request.user.is_authenticated:
-        cart, created = Cart.objects.get_or_create(user=request.user)
-    else:
-        if not request.session.session_key:
-            request.session.create()
-        session_key = request.session.session_key
-        cart, created = Cart.objects.get_or_create(session_key=session_key, user=None)
-    return cart
 
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart = get_or_create_cart(request)
 
     cart_item, created = CartItem.objects.get_or_create(
-        cart=cart, 
+        cart=cart,
         product=product,
         defaults={'quantity': 1}
     )
@@ -32,9 +23,11 @@ def add_to_cart(request, product_id):
     messages.success(request, f"{product.name} a été ajouté au panier.")
     return redirect('product_list')
 
+
 def view_cart(request):
     cart = get_or_create_cart(request)
     return render(request, 'store/cart.html', {'cart': cart})
+
 
 def remove_from_cart(request, item_id):
     cart = get_or_create_cart(request)
@@ -42,6 +35,7 @@ def remove_from_cart(request, item_id):
     item.delete()
     messages.success(request, "Produit retiré du panier.")
     return redirect('view_cart')
+
 
 def cart_summary(request):
     cart = get_or_create_cart(request)

@@ -56,6 +56,9 @@ TEMPLATES = [
         },
     },
 ]
+# Spécifiez le template pack que vous utilisez
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 WSGI_APPLICATION = 'amodgreen.wsgi.application'
 
@@ -133,3 +136,7 @@ ADMIN_WHATSAPP = "+212631889579"
 ADMIN_EMAIL = "admin@example.com"
 ADMIN_ADDRESS = "Rabat, Maroc"
 ADMIN_WHATSAPP_NUMBER = '212631889579'
+
+
+TELEGRAM_BOT_TOKEN = '8297807115:AAGxxGv6rL9bF6h_XW2JsGW2RfdHbmK761U'
+TELEGRAM_CHAT_ID = '1734276901'  

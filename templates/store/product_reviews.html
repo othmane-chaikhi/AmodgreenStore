@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Avis sur {{ product.name }} - AmodGreen{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex items-center mb-8">
+        <a href="{{ product.get_absolute_url }}" class="text-olive-600 hover:text-olive-700">
+            <i class="fas fa-arrow-left mr-2"></i> Retour au produit
+        </a>
+        <h1 class="text-2xl font-bold text-stone-800 ml-4">
+            Avis clients - {{ product.name }}
+        </h1>
+    </div>
+    
+    <!-- Liste des avis -->
+    <div class="space-y-6">
+        {% for review in page_obj %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-olive-600 rounded-full flex items-center justify-center text-white font-semibold">
+                    {{ review.author.first_name.0|default:review.author.username.0 }}
+                </div>
+                <div class="ml-3">
+                    <div class="font-medium text-stone-800">
+                        {{ review.author.first_name|default:review.author.username }}
+                    </div>
+                    <div class="text-sm text-stone-500">
+                        {{ review.created_at|date:"d M Y" }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                {% include "includes/star_rating.html" with rating=review.rating %}
+            </div>
+            
+            <h4 class="font-semibold text-stone-800 mb-2">{{ review.title }}</h4>
+            <p class="text-stone-600">{{ review.content }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8">
+        <nav class="flex justify-center">
+            {% if page_obj.has_previous %}
+                <a href="?page=1" class="px-3 py-1 border rounded-l-lg">«</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border">‹</a>
+            {% endif %}
+            
+            <span class="px-3 py-1 bg-olive-600 text-white">
+                Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border">›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border rounded-r-lg">»</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

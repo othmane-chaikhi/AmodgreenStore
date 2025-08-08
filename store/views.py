@@ -1,64 +1,60 @@
+from urllib.parse import quote
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Avg, Count
 from django.conf import settings
-from django.urls import reverse
-from django.http import JsonResponse
-from urllib.parse import quote
-from .models import Product, Category, Order, CommunityPost, Comment, CustomUser, Order, OrderItem ,Cart
-from .forms import OrderForm, CustomUserCreationForm, CommunityPostForm, CommentForm, UserProfileForm
+
+from .models import (
+    Product, Category, Order, OrderItem,
+    CommunityPost, Comment, CustomUser, Cart
+)
+from .forms import (
+    OrderForm, CustomUserCreationForm, CommunityPostForm,
+    CommentForm, UserProfileForm
+)
 from .utils import get_or_create_cart
+from .telegram import send_telegram_message
+
 
 def home(request):
-    """Page d'accueil"""
-    # Produits en vedette (les 6 derniers)
     featured_products = Product.objects.filter(is_available=True)[:6]
-    
-    # Derniers avis approuvés de la communauté
     latest_reviews = CommunityPost.objects.filter(
         is_approved=True,
         post_type='review'
     )[:5]
-    
-    # Statistiques pour l'affichage
-    total_products = Product.objects.filter(is_available=True).count()
-    total_categories = Category.objects.count()
-    
+
     context = {
         'featured_products': featured_products,
         'latest_reviews': latest_reviews,
-        'total_products': total_products,
-        'total_categories': total_categories,
+        'total_products': Product.objects.filter(is_available=True).count(),
+        'total_categories': Category.objects.count(),
     }
     return render(request, 'store/home.html', context)
 
 def product_list(request):
-    """Liste des produits avec filtres"""
     products = Product.objects.filter(is_available=True)
     categories = Category.objects.all()
-    
-    # Filtres
+
     category_id = request.GET.get('category')
     search_query = request.GET.get('search')
-    
+
     if category_id:
         products = products.filter(category_id=category_id)
-    
+
     if search_query:
         products = products.filter(
-            Q(name__icontains=search_query) | 
+            Q(name__icontains=search_query) |
             Q(description__icontains=search_query) |
             Q(name_ar__icontains=search_query)
         )
-    
-    # Pagination
-    paginator = Paginator(products, 12)  # 12 produits par page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
+
+    paginator = Paginator(products, 12)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
     context = {
         'page_obj': page_obj,
         'categories': categories,
@@ -68,33 +64,63 @@ def product_list(request):
     return render(request, 'store/product_list.html', context)
 
 def product_detail(request, pk):
-    """Détail d'un produit"""
     product = get_object_or_404(Product, pk=pk, is_available=True)
-    
-    # Produits similaires
     related_products = Product.objects.filter(
         category=product.category,
         is_available=True
     ).exclude(pk=product.pk)[:4]
-    
-    # Avis sur ce produit
+
     product_reviews = CommunityPost.objects.filter(
         product=product,
         is_approved=True,
-        post_type='review'
-    )[:3]
-    
+        post_type='review',
+        rating__isnull=False
+    ).order_by('-created_at')[:5]
+
+    reviews_stats = product_reviews.aggregate(
+        avg_rating=Avg('rating'),
+        count=Count('id')
+    )
+
+    if request.method == 'POST' and 'submit_review' in request.POST:
+        if not request.user.is_authenticated:
+            messages.warning(request, "Vous devez être connecté pour poster un avis.")
+            return redirect('login') + f'?next={request.path}'
+
+        post_data = request.POST.copy()
+        post_data['product'] = product.id
+        post_data['post_type'] = 'review'
+
+        form = CommunityPostForm(post_data)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.author = request.user
+            review.product = product
+            review.post_type = 'review'
+            review.is_approved = True
+            review.save()
+            messages.success(request, "Votre avis a été ajouté avec succès!")
+            return redirect('product_detail', pk=product.pk)
+        else:
+            messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
+    else:
+        form = CommunityPostForm(initial={
+            'post_type': 'review',
+            'product': product.id
+        })
+
     context = {
         'product': product,
         'related_products': related_products,
         'product_reviews': product_reviews,
+        'avg_rating': round(reviews_stats['avg_rating'], 1) if reviews_stats['avg_rating'] else None,
+        'review_count': reviews_stats['count'],
+        'review_form': form,
     }
     return render(request, 'store/product_detail.html', context)
 
 def order_create(request):
-    """Create an order from cart contents (no login required)"""
     cart = get_or_create_cart(request)
-    
     if not cart or not cart.items.exists():
         messages.warning(request, "Votre panier est vide.")
         return redirect('view_cart')
@@ -103,14 +129,10 @@ def order_create(request):
         form = OrderForm(request.POST)
         if form.is_valid():
             order = form.save(commit=False)
-            
-            # If user is logged in, associate the order with them
             if request.user.is_authenticated:
                 order.user = request.user
-            
             order.save()
 
-            # Create order items
             for item in cart.items.all():
                 OrderItem.objects.create(
                     order=order,
@@ -119,16 +141,31 @@ def order_create(request):
                     price=item.product.price,
                 )
 
-            # Clear the cart
+            # حذف عناصر السلة
             cart.items.all().delete()
             if not request.user.is_authenticated:
                 cart.delete()
 
-            # Prepare WhatsApp message
-            admin_phone = settings.ADMIN_WHATSAPP_NUMBER
-            message = generate_order_message(order)
-            whatsapp_url = f"https://wa.me/{admin_phone}?text={quote(message)}"
+            # ✅ إرسال إشعار التلغرام هنا مرة واحدة فقط
+            items_text = "\n".join([
+                f"• {item.product.name} x{item.quantity} = {item.price} درهم"
+                for item in order.items.all()
+            ])
+            message = f"""🛒 <b>طلب جديد!</b>
+            <b>_Commande #{order.id} - {order.created_at.strftime('%d/%m/%Y à %H:%M')}_</b>
+            👤 <b>العميل:</b> {order.full_name}
+            📞 <b>الهاتف:</b> {order.phone}
+            🏙️ <b>المدينة:</b> {order.city}
+            💰 <b>المجموع:</b> {order.total_price} درهم
+            🛍️ <b>المنتجات:</b>
+            {items_text}
+            
+            ⛔⛔⛔ <b>Remarques:</b> {order.notes if order.notes else 'Aucune'} ⛔⛔⛔"""
+            # إرسال رسالة إلى التلغرام
+            send_telegram_message(message)
 
+            # رابط واتساب
+            whatsapp_url = f"https://wa.me/{settings.ADMIN_WHATSAPP_NUMBER}?text={quote(generate_order_message(order))}"
             messages.success(request, 'Votre commande a été envoyée avec succès !')
             return render(request, 'store/order_success.html', {
                 'order': order,
@@ -143,30 +180,28 @@ def order_create(request):
     })
 
 def generate_order_message(order):
-    """Generate WhatsApp message for order confirmation"""
     items_text = "\n".join(
-        [f"📦 {item.quantity}x {item.product.name} ({item.price} MAD)" 
+        [f"📦 {item.quantity}x {item.product.name} ({item.price} MAD)"
          for item in order.items.all()]
     )
     total = sum(item.quantity * item.price for item in order.items.all())
-    
-    return f"""🌿 *Nouvelle commande AmodGreen* 🌿
 
-👤 *Client:* {order.full_name}
-📱 *Téléphone:* {order.phone}
-🏙️ *Ville:* {order.city}
-📍 *Adresse:* {order.address}
+    return f"""🌿 *Nouvelle commande AmodIgren* 🌿
 
-🛒 *Articles:*
-{items_text}
+    👤 *Client:* {order.full_name}
+    📱 *Téléphone:* {order.phone}   
+    🏙️ *Ville:* {order.city}
+    📍 *Adresse:* {order.address}
 
-💰 *Total:* {total} MAD
-📝 *Remarques:* {order.notes if order.notes else 'Aucune'}
+    🛒 *Articles:*
+    {items_text}
 
-_Commande #{order.id} - {order.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
+    💰 *Total:* {total} MAD
+    📝 *Remarques:* {order.notes if order.notes else 'Aucune'}
+
+    _Commande #{order.id} - {order.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
 
 def register_view(request):
-    """Inscription d'un nouvel utilisateur"""
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -176,54 +211,50 @@ def register_view(request):
             return redirect('home')
     else:
         form = CustomUserCreationForm()
-    
     return render(request, 'registration/register.html', {'form': form})
 
 def community(request):
-    """Page communauté avec posts filtrés, pagination et formulaires pour utilisateur connecté."""
     post_type = request.GET.get('type')
-
-    # Récupérer les posts approuvés, filtrer par type si spécifié
     posts = CommunityPost.objects.filter(is_approved=True)
     if post_type in ['review', 'testimonial', 'discussion']:
         posts = posts.filter(post_type=post_type)
-    
     posts = posts.order_by('-created_at')
 
-    # Pagination (10 posts par page)
     paginator = Paginator(posts, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    # Formulaires affichés uniquement si utilisateur connecté
-    post_form = CommunityPostForm() if request.user.is_authenticated else None
-    comment_form = CommentForm() if request.user.is_authenticated else None
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     context = {
         'page_obj': page_obj,
-        'post_form': post_form,
-        'comment_form': comment_form,
+        'post_form': CommunityPostForm() if request.user.is_authenticated else None,
+        'comment_form': CommentForm() if request.user.is_authenticated else None,
         'current_type': post_type,
     }
     return render(request, 'store/community.html', context)
 
 @login_required
 def create_post(request):
-    """Créer un nouveau post communauté"""
     if request.method == 'POST':
         form = CommunityPostForm(request.POST)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
+            post.is_approved = True
             post.save()
-            messages.success(request, 'Votre message a été soumis et sera publié après modération.')
+            messages.success(request, 'Votre message a été publié avec succès!')
             return redirect('community')
-    
+        else:
+            messages.error(request, 'Veuillez corriger les erreurs ci-dessous.')
+            # Contexte minimal de secours
+            context = {
+                'post_form': form,
+                'page_obj': [],
+                'current_type': None,
+            }
+            return render(request, 'store/community.html', context)
     return redirect('community')
 
 @login_required
 def add_comment(request, post_id):
-    """Ajouter un commentaire à un post"""
     if request.method == 'POST':
         post = get_object_or_404(CommunityPost, pk=post_id, is_approved=True)
         form = CommentForm(request.POST)
@@ -233,14 +264,11 @@ def add_comment(request, post_id):
             comment.author = request.user
             comment.save()
             messages.success(request, 'Votre commentaire a été soumis et sera publié après modération.')
-    
     return redirect('community')
 
 @login_required
 def profile(request):
-    """Profil utilisateur"""
     user_posts = CommunityPost.objects.filter(author=request.user).order_by('-created_at')
-    
     if request.method == 'POST':
         form = UserProfileForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -249,17 +277,31 @@ def profile(request):
             return redirect('profile')
     else:
         form = UserProfileForm(instance=request.user)
-    
-    context = {
+
+    return render(request, 'store/profile.html', {
         'form': form,
         'user_posts': user_posts,
-    }
-    return render(request, 'store/profile.html', context)
+    })
 
 def about(request):
-    """Page à propos"""
     return render(request, 'store/about.html')
 
 def contact(request):
-    """Page contact"""
     return render(request, 'store/contact.html')
+
+def product_reviews(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    reviews = CommunityPost.objects.filter(
+        product=product,
+        is_approved=True,
+        post_type='review',
+        rating__isnull=False
+    ).order_by('-created_at')
+
+    paginator = Paginator(reviews, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    return render(request, 'store/product_reviews.html', {
+        'product': product,
+        'page_obj': page_obj,
+    })

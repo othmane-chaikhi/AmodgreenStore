@@ -5,70 +5,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AmodGreen - Coopérative Marocaine de Produits Naturels{% endblock %}</title>
+    <title>{% block title %}AmodIgren - Coopérative Marocaine de Produits Naturels{% endblock %}</title>
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'olive': {
-                            50: '#f7f8f3',
-                            100: '#edeee3',
-                            200: '#dcdfc8',
-                            300: '#c4cba4',
-                            400: '#adb982',
-                            500: '#8a9b5d',
-                            600: '#6f7d47',
-                            700: '#58613a',
-                            800: '#484e32',
-                            900: '#3c422c',
-                        },
-                        'sage': {
-                            50: '#f6f7f4',
-                            100: '#e9ebe3',
-                            200: '#d4d9c8',
-                            300: '#b7c0a3',
-                            400: '#98a67c',
-                            500: '#7d8a5d',
-                            600: '#626d47',
-                            700: '#4d563a',
-                            800: '#404732',
-                            900: '#373d2c',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
+    <script src="{% static 'js/taillwindcss.js' %}"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <!-- Custom CSS -->
-    <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #8a9b5d 0%, #6f7d47 100%);
-        }
-
-        .text-gradient {
-            background: linear-gradient(135deg, #8a9b5d, #6f7d47);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-    </style>
-
+    <link href="{% static 'css/main.css' %}" rel="stylesheet" />
 </head>
 
 <body class="min-h-full bg-stone-50 text-stone-800">
@@ -226,52 +169,7 @@
             </div>
         </div>
     </footer>
-
-    <script>
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
-        }
-
-        // Fermer le menu mobile quand on clique à l'extérieur
-        document.addEventListener('click', function (event) {
-            const menu = document.getElementById('mobile-menu');
-            const button = event.target.closest('[onclick="toggleMobileMenu()"]');
-
-            if (!button && !menu.contains(event.target)) {
-                menu.classList.add('hidden');
-            }
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const buttons = document.querySelectorAll('.add-to-cart-btn');
-
-            buttons.forEach(button => {
-                button.addEventListener('click', function () {
-                    const productId = this.getAttribute('data-product-id');
-
-                    fetch(`/cart/add/${productId}/`, {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                        }
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                alert('✅ Produit ajouté au panier !');
-                                // Optionnel : mettre à jour un compteur panier
-                                document.getElementById('cart-count')?.textContent = data.cart_count;
-                            } else {
-                                alert('Erreur lors de l’ajout au panier.');
-                            }
-                        });
-                });
-            });
-        });
-    </script>
-
+    <script src="{% static 'js/main.js' %}"></script>
 </body>
 
 </html>

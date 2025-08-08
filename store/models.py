@@ -43,7 +43,7 @@ class Product(models.Model):
     ingredients = models.TextField(blank=True, verbose_name="Ingrédients")
     ingredients_ar = models.TextField(blank=True, verbose_name="Ingrédients (Arabe)")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix (MAD)")
-    image = models.ImageField(upload_to='products/', verbose_name="Image")
+    image = models.ImageField(upload_to='products/', verbose_name="Image principale")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Catégorie")
     is_available = models.BooleanField(default=True, verbose_name="Disponible")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -81,6 +81,14 @@ class Product(models.Model):
             if img.height > 600 or img.width > 600:
                 img.thumbnail((600, 600))
                 img.save(self.image.path)
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='productimage_set')
+
+    image = models.ImageField(upload_to='products/')
+
+    def __str__(self):
+        return f"Image for {self.product.name}"
 
 # =========================
 # Commandes

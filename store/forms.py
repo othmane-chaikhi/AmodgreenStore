@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
-from .models import CustomUser, Order, CommunityPost, Comment, Product, Category
+from .models import CustomUser, Order, CommunityPost, Comment, Product, Category,ProductImage
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -139,6 +139,10 @@ class UserProfileForm(forms.ModelForm):
         for field in self.fields.values():
             field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
 
+class ProductImageForm(forms.ModelForm):
+    class Meta:
+        model = ProductImage
+        fields = ['image']
 
 class ProductForm(forms.ModelForm):
     """Formulaire pour ajouter ou modifier un produit"""

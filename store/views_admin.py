@@ -15,7 +15,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-
+from .models import ProductImage  # تأكد أنك استوردت النموذج
+from django.contrib import messages
 
 # Vérifie si l'utilisateur est superuser
 def admin_required(view_func):
@@ -64,29 +65,47 @@ def toggle_comment_approval(request, comment_id):
         comment.save()
         return redirect('admin_dashboard')
 
+
 @admin_required
 def product_create(request):
-        if request.method == 'POST':
-            form = ProductForm(request.POST, request.FILES)
-            if form.is_valid():
-                form.save()
-                return redirect('admin_dashboard')  # redirige vers le dashboard après création
-        else:
-            form = ProductForm()
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
         
-        return render(request, 'admin/product_create.html', {'form': form})
+        if form.is_valid():
+            product = form.save()
+
+            # حفظ الصور الإضافية المتعددة (من نفس الحقل 'image')
+            images = request.FILES.getlist('image')
+            for img in images:
+                ProductImage.objects.create(product=product, image=img)
+
+            messages.success(request, "Produit créé avec succès.")
+            return redirect('admin_dashboard')
+    else:
+        form = ProductForm()
+
+    return render(request, 'admin/product_create.html', {'form': form})
 
 @admin_required
 def product_update(request, pk):
-        product = get_object_or_404(Product, pk=pk)
-        if request.method == 'POST':
-            form = ProductForm(request.POST, request.FILES, instance=product)
-            if form.is_valid():
-                form.save()
-                return redirect('admin_dashboard')
-        else:
-            form = ProductForm(instance=product)
-        return render(request, 'admin/product_form.html', {'form': form, 'title': 'Modifier le produit'})
+    product = get_object_or_404(Product, pk=pk)
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+
+            # إضافة صور جديدة
+            images = request.FILES.getlist('images')
+            for image in images:
+                ProductImage.objects.create(product=product, image=image)
+
+            messages.success(request, "Produit mis à jour avec succès.")
+            return redirect('admin_dashboard')
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, 'admin/product_form.html', {'form': form, 'title': 'Modifier le produit'})
 
 @admin_required
 def product_delete(request, pk):

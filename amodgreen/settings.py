@@ -87,16 +87,22 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'fr'
+LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Africa/Casablanca'
 USE_I18N = True
 USE_TZ = True
+USE_L10N = True
+
+
 
 LANGUAGES = [
     ('fr', 'Français'),
     ('ar', 'العربية'),
 ]
 
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]

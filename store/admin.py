@@ -21,8 +21,27 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name', 'name_ar')
     readonly_fields = ('created_at',)
 
+from django.contrib import admin
+from .models import Product, ProductImage
+
+from django.utils.html import format_html
+
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 1  # عدد الحقول الفارغة التي تظهر عند إضافة صور جديدة
+    max_num = 10  # عدد الصور القصوى (اختياري)
+    readonly_fields = ('image_preview',)
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="100" height="100" />', obj.image.url)
+        return ""
+    image_preview.short_description = "Aperçu"
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    inlines = [ProductImageInline]  # ⬅️ هذا هو الجزء المهم
+
     list_display = ('name', 'category', 'price', 'is_available', 'image_preview', 'created_at')
     list_filter = ('category', 'is_available', 'created_at')
     search_fields = ('name', 'name_ar', 'description')
@@ -44,6 +63,12 @@ class ProductAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="100" height="100" />', obj.image.url)
+        return "-"
+    image_preview.short_description = "Image principale"
 
     def image_preview(self, obj):
         if obj.image:

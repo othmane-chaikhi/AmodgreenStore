@@ -21,18 +21,18 @@
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex items-center">
-                    <a href="{% url 'home' %}" class="text-2xl font-bold text-gradient">
-                        🌿 AmodGreen
+                    <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                        <img src="{% static 'img/logo2.png' %}" alt="Logo AmodIGren" class="h-14 w-auto">
+                        <span class="text-2xl font-bold text-gradient">AmodIGren</span>
                     </a>
                 </div>
+
 
                 <!-- Navigation Links -->
                 <div class="hidden md:flex space-x-8">
                     <a href="{% url 'home' %}" class="text-stone-700 hover:text-olive-600 transition-colors">Accueil</a>
                     <a href="{% url 'product_list' %}"
                         class="text-stone-700 hover:text-olive-600 transition-colors">Produits</a>
-                    <a href="{% url 'community' %}"
-                        class="text-stone-700 hover:text-olive-600 transition-colors">Communauté</a>
                     <a href="{% url 'about' %}" class="text-stone-700 hover:text-olive-600 transition-colors">À
                         propos</a>
                     <a href="{% url 'contact' %}"
@@ -40,7 +40,7 @@
                 </div>
 
                 <!-- User Menu -->
-                <div class="flex items-center space-x-4">
+                <div class="hidden sm:flex items-center space-x-4">
                     {% if user.is_authenticated %}
                     <a href="{% url 'profile' %}" class="text-stone-700 hover:text-olive-600 transition-colors">
                         <i class="fas fa-user"></i> {{ user.first_name|default:user.username }}
@@ -59,7 +59,9 @@
                     {% endif %}
 
                 </div>
-                <div class="flex items-center space-x-6">
+
+                <!-- Cart Icon for larger screens -->
+                <div class="hidden sm:flex items-center space-x-6">
                     <a href="{% url 'view_cart' %}" class="relative text-gray-700 hover:text-green-700">
                         🛒
                         <span
@@ -68,6 +70,18 @@
                         </span>
                     </a>
                 </div>
+                <!-- Cart Icon -->
+                <div class="fixed bottom-6 right-4 z-50 bg-white p-3 sm:p-4 rounded-full shadow-lg">
+                    <a href="{% url 'view_cart' %}"
+                        class="relative text-gray-700 hover:text-green-700 text-2xl sm:text-3xl">
+                        🛒
+                        <span id="cart-count"
+                            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-1">
+                            {{ cart_count|default:0 }}
+                        </span>
+                    </a>
+                </div>
+
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
                     <button type="button" class="text-stone-500 hover:text-stone-700" onclick="toggleMobileMenu()">
@@ -83,8 +97,6 @@
                 <a href="{% url 'home' %}" class="block px-3 py-2 text-stone-700 hover:text-olive-600">Accueil</a>
                 <a href="{% url 'product_list' %}"
                     class="block px-3 py-2 text-stone-700 hover:text-olive-600">Produits</a>
-                <a href="{% url 'community' %}"
-                    class="block px-3 py-2 text-stone-700 hover:text-olive-600">Communauté</a>
                 <a href="{% url 'about' %}" class="block px-3 py-2 text-stone-700 hover:text-olive-600">À propos</a>
                 <a href="{% url 'contact' %}" class="block px-3 py-2 text-stone-700 hover:text-olive-600">Contact</a>
                 {% if not user.is_authenticated %}
@@ -112,6 +124,23 @@
     <main>
         {% block content %}
         {% endblock %}
+        <!-- Container عائم في أسفل الشاشة -->
+        <div
+            class="fixed bottom-4 left-4 z-50 flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0 bg-olive-700 bg-opacity-90 rounded-full p-2 shadow-lg">
+            <a href="#"
+                class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors">
+                <i class="fab fa-facebook-f text-lg text-white"></i>
+            </a>
+            <a href="#"
+                class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors">
+                <i class="fab fa-instagram text-lg text-white"></i>
+            </a>
+            <a href="#"
+                class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors">
+                <i class="fab fa-whatsapp text-lg text-white"></i>
+            </a>
+        </div>
+
     </main>
 
     <!-- Footer -->
@@ -120,7 +149,10 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <!-- Logo et description -->
                 <div class="col-span-1 md:col-span-2">
-                    <h3 class="text-2xl font-bold text-gradient mb-4">🌿 AmodGreen</h3>
+                    <div class="col-span-1 md:col-span-2 flex items-center space-x-4 mb-4">
+                        <img src="{% static 'img/logo2.png' %}" alt="Logo AmodGreen" class="h-24 w-auto">
+                        <h3 class="text-2xl font-bold text-gradient">AmodIgren</h3>
+                    </div>
                     <p class="text-stone-400 mb-4">
                         Coopérative marocaine spécialisée dans la vente de produits naturels authentiques.
                         Découvrez nos huiles d'argan, amlou, huiles essentielles et plantes médicinales.
@@ -146,8 +178,6 @@
                                 class="text-stone-400 hover:text-white transition-colors">Accueil</a></li>
                         <li><a href="{% url 'product_list' %}"
                                 class="text-stone-400 hover:text-white transition-colors">Nos produits</a></li>
-                        <li><a href="{% url 'community' %}"
-                                class="text-stone-400 hover:text-white transition-colors">Communauté</a></li>
                         <li><a href="{% url 'about' %}" class="text-stone-400 hover:text-white transition-colors">À
                                 propos</a></li>
                     </ul>
@@ -170,6 +200,9 @@
         </div>
     </footer>
     <script src="{% static 'js/main.js' %}"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
 </body>
 
 </html>

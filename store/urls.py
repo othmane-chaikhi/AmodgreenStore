@@ -23,9 +23,9 @@ urlpatterns = [
     path('cart/recapitulatif/', views_cart.cart_summary, name='cart_summary'),  # يمكن حذف واحدة إذا رغبت
 
     # Communauté
-    path('communaute/', views.community, name='community'),
-    path('communaute/nouveau-post/', views.create_post, name='create_post'),
-    path('communaute/commenter/<int:post_id>/', views.add_comment, name='add_comment'),
+    # path('communaute/', views.community, name='community'),
+    # path('communaute/nouveau-post/', views.create_post, name='create_post'),
+    # path('communaute/commenter/<int:post_id>/', views.add_comment, name='add_comment'),
 
     # Admin dashboard & gestion
     path('admin-dashboard/', views_admin.admin_dashboard, name='admin_dashboard'),
@@ -40,7 +40,7 @@ urlpatterns = [
     path('admin-dashboard/order/<int:order_id>/<str:status>/', views_admin.update_order_status, name='update_order_status'),
     path('admin-dashboard/orders/delete/<int:order_id>/', views_admin.delete_order, name='delete_order'),
 
-    path('admin-dashboard/comment/<int:comment_id>/toggle/', views_admin.toggle_comment_approval, name='toggle_comment_approval'),
+    # path('admin-dashboard/comment/<int:comment_id>/toggle/', views_admin.toggle_comment_approval, name='toggle_comment_approval'),
 
     path('product/<int:pk>/edit/', views_admin.product_update, name='product_update'),
     path('product/<int:pk>/delete-image/', views_admin.delete_product_image, name='delete_product_image'),

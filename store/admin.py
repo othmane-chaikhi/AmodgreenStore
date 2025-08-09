@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from .models import CustomUser, Category, Product, Order, CommunityPost, Comment
+from .models import CustomUser, Category, Product, Order, CommunityPost
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -103,8 +103,8 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(CommunityPost)
 class CommunityPostAdmin(admin.ModelAdmin):
-    list_display = ('title', 'author', 'post_type', 'is_approved', 'created_at')
-    list_filter = ('post_type', 'is_approved', 'created_at')
+    list_display = ('title', 'author',  'is_approved', 'created_at')
+    list_filter = ( 'is_approved', 'created_at')
     search_fields = ('title', 'content', 'author__username')
     readonly_fields = ('created_at', 'updated_at')
     list_editable = ('is_approved',)
@@ -122,7 +122,8 @@ class CommunityPostAdmin(admin.ModelAdmin):
         }),
     )
 
-    actions = ['approve_posts', 'unapprove_posts']
+    actions = ['delete_selected', 'approve_posts', 'unapprove_posts']
+
 
     def approve_posts(self, request, queryset):
         queryset.update(is_approved=True)
@@ -134,26 +135,26 @@ class CommunityPostAdmin(admin.ModelAdmin):
         self.message_user(request, f"{queryset.count()} posts désapprouvés.")
     unapprove_posts.short_description = "Désapprouver les posts sélectionnés"
 
-@admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
-    list_display = ('author', 'post', 'content_preview', 'is_approved', 'created_at')
-    list_filter = ('is_approved', 'created_at')
-    search_fields = ('content', 'author__username', 'post__title')
-    readonly_fields = ('created_at',)
-    list_editable = ('is_approved',)
+# @admin.register(Comment)
+# class CommentAdmin(admin.ModelAdmin):
+#     list_display = ('author', 'post', 'content_preview', 'is_approved', 'created_at')
+#     list_filter = ('is_approved', 'created_at')
+#     search_fields = ('content', 'author__username', 'post__title')
+#     readonly_fields = ('created_at',)
+#     list_editable = ('is_approved',)
 
-    def content_preview(self, obj):
-        return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
-    content_preview.short_description = "Aperçu du contenu"
+#     def content_preview(self, obj):
+#         return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
+#     content_preview.short_description = "Aperçu du contenu"
 
-    actions = ['approve_comments', 'unapprove_comments']
+#     actions = ['approve_comments', 'unapprove_comments']
 
-    def approve_comments(self, request, queryset):
-        queryset.update(is_approved=True)
-        self.message_user(request, f"{queryset.count()} commentaires approuvés.")
-    approve_comments.short_description = "Approuver les commentaires sélectionnés"
+#     def approve_comments(self, request, queryset):
+#         queryset.update(is_approved=True)
+#         self.message_user(request, f"{queryset.count()} commentaires approuvés.")
+#     approve_comments.short_description = "Approuver les commentaires sélectionnés"
 
-    def unapprove_comments(self, request, queryset):
-        queryset.update(is_approved=False)
-        self.message_user(request, f"{queryset.count()} commentaires désapprouvés.")
-    unapprove_comments.short_description = "Désapprouver les commentaires sélectionnés"
+#     def unapprove_comments(self, request, queryset):
+#         queryset.update(is_approved=False)
+#         self.message_user(request, f"{queryset.count()} commentaires désapprouvés.")
+#     unapprove_comments.short_description = "Désapprouver les commentaires sélectionnés"

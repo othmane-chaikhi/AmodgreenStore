@@ -10,11 +10,11 @@ from django.conf import settings
 
 from .models import (
     Product, Category, Order, OrderItem,
-    CommunityPost, Comment, CustomUser, Cart
+    CommunityPost, CustomUser, Cart
 )
 from .forms import (
     OrderForm, CustomUserCreationForm, CommunityPostForm,
-    CommentForm, UserProfileForm
+    UserProfileForm
 )
 from .utils import get_or_create_cart
 from .telegram import send_telegram_message
@@ -24,7 +24,6 @@ def home(request):
     featured_products = Product.objects.filter(is_available=True)[:6]
     latest_reviews = CommunityPost.objects.filter(
         is_approved=True,
-        post_type='review'
     )[:5]
 
     context = {
@@ -73,7 +72,6 @@ def product_detail(request, pk):
     product_reviews = CommunityPost.objects.filter(
         product=product,
         is_approved=True,
-        post_type='review',
         rating__isnull=False
     ).order_by('-created_at')[:5]
 
@@ -89,14 +87,12 @@ def product_detail(request, pk):
 
         post_data = request.POST.copy()
         post_data['product'] = product.id
-        post_data['post_type'] = 'review'
 
         form = CommunityPostForm(post_data)
         if form.is_valid():
             review = form.save(commit=False)
             review.author = request.user
             review.product = product
-            review.post_type = 'review'
             review.is_approved = True
             review.save()
             messages.success(request, "Votre avis a été ajouté avec succès!")
@@ -105,7 +101,6 @@ def product_detail(request, pk):
             messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
     else:
         form = CommunityPostForm(initial={
-            'post_type': 'review',
             'product': product.id
         })
 
@@ -140,13 +135,10 @@ def order_create(request):
                     quantity=item.quantity,
                     price=item.product.price,
                 )
-
-            # حذف عناصر السلة
             cart.items.all().delete()
             if not request.user.is_authenticated:
                 cart.delete()
 
-            # ✅ إرسال إشعار التلغرام هنا مرة واحدة فقط
             items_text = "\n".join([
                 f"• {item.product.name} x{item.quantity} = {item.price} درهم"
                 for item in order.items.all()
@@ -161,10 +153,8 @@ def order_create(request):
             {items_text}
             
             ⛔⛔⛔ <b>Remarques:</b> {order.notes if order.notes else 'Aucune'} ⛔⛔⛔"""
-            # إرسال رسالة إلى التلغرام
             send_telegram_message(message)
 
-            # رابط واتساب
             whatsapp_url = f"https://wa.me/{settings.ADMIN_WHATSAPP_NUMBER}?text={quote(generate_order_message(order))}"
             messages.success(request, 'Votre commande a été envoyée avec succès !')
             return render(request, 'store/order_success.html', {
@@ -213,58 +203,7 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'registration/register.html', {'form': form})
 
-def community(request):
-    post_type = request.GET.get('type')
-    posts = CommunityPost.objects.filter(is_approved=True)
-    if post_type in ['review', 'testimonial', 'discussion']:
-        posts = posts.filter(post_type=post_type)
-    posts = posts.order_by('-created_at')
-
-    paginator = Paginator(posts, 10)
-    page_obj = paginator.get_page(request.GET.get('page'))
-
-    context = {
-        'page_obj': page_obj,
-        'post_form': CommunityPostForm() if request.user.is_authenticated else None,
-        'comment_form': CommentForm() if request.user.is_authenticated else None,
-        'current_type': post_type,
-    }
-    return render(request, 'store/community.html', context)
-
-@login_required
-def create_post(request):
-    if request.method == 'POST':
-        form = CommunityPostForm(request.POST)
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.is_approved = True
-            post.save()
-            messages.success(request, 'Votre message a été publié avec succès!')
-            return redirect('community')
-        else:
-            messages.error(request, 'Veuillez corriger les erreurs ci-dessous.')
-            # Contexte minimal de secours
-            context = {
-                'post_form': form,
-                'page_obj': [],
-                'current_type': None,
-            }
-            return render(request, 'store/community.html', context)
-    return redirect('community')
-
-@login_required
-def add_comment(request, post_id):
-    if request.method == 'POST':
-        post = get_object_or_404(CommunityPost, pk=post_id, is_approved=True)
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.post = post
-            comment.author = request.user
-            comment.save()
-            messages.success(request, 'Votre commentaire a été soumis et sera publié après modération.')
-    return redirect('community')
+from django.core.paginator import Paginator
 
 @login_required
 def profile(request):
@@ -294,7 +233,6 @@ def product_reviews(request, pk):
     reviews = CommunityPost.objects.filter(
         product=product,
         is_approved=True,
-        post_type='review',
         rating__isnull=False
     ).order_by('-created_at')
 

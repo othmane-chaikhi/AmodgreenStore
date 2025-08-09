@@ -6,7 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .forms import ProductForm, ConfirmOrderForm, CategoryForm
-from .models import Product, Order, CommunityPost, Comment, ProductImage
+from .models import Product, Order, CommunityPost, ProductImage
 
 import json
 import openpyxl
@@ -31,7 +31,6 @@ def admin_required(view_func):
 @admin_required
 def admin_dashboard(request):
     total_products = Product.objects.count()
-    total_comments = Comment.objects.count()
     total_posts = CommunityPost.objects.count()
     orders_pending = Order.objects.filter(status='pending').count()
     orders_delivered = Order.objects.filter(status='delivered').count()
@@ -44,7 +43,6 @@ def admin_dashboard(request):
 
     context = {
         'total_products': total_products,
-        'total_comments': total_comments,
         'total_posts': total_posts,
         'orders_pending': orders_pending,
         'orders_delivered': orders_delivered,
@@ -63,18 +61,6 @@ def update_order_status(request, order_id, status):
     order.status = status
     order.save()
     return redirect('admin_dashboard')
-
-
-# ----------------------------------------
-# Basculer l'approbation d'un commentaire
-# ----------------------------------------
-@admin_required
-def toggle_comment_approval(request, comment_id):
-    comment = get_object_or_404(Comment, pk=comment_id)
-    comment.is_approved = not comment.is_approved
-    comment.save()
-    return redirect('admin_dashboard')
-
 
 # ----------------------------------------
 # Création d'un produit avec gestion des images multiples

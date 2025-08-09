@@ -216,57 +216,48 @@ class CartItem(models.Model):
 # =========================
 
 class CommunityPost(models.Model):
-    POST_TYPES = [
-        ('review', 'Avis produit'),
-        ('testimonial', 'Témoignage'),
-        ('discussion', 'Discussion'),
-    ]
-
-    RATING_CHOICES = [
-        (5, '★★★★★ - Excellent'),
-        (4, '★★★★☆ - Très bon'),
-        (3, '★★★☆☆ - Bon'),
-        (2, '★★☆☆☆ - Moyen'),
-        (1, '★☆☆☆☆ - Décevant'),
-    ]
-
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="Auteur")
     title = models.CharField(max_length=200, verbose_name="Titre")
     content = models.TextField(verbose_name="Contenu")
-    post_type = models.CharField(max_length=20, choices=POST_TYPES, default='discussion', verbose_name="Type de post")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Produit lié")
-    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES, null=True, blank=True, verbose_name="Note")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Produit lié")
+    rating = models.PositiveSmallIntegerField(
+        choices=[
+            (5, '★★★★★ - Excellent'),
+            (4, '★★★★☆ - Très bon'),
+            (3, '★★★☆☆ - Bon'),
+            (2, '★★☆☆☆ - Moyen'),
+            (1, '★☆☆☆☆ - Décevant'),
+        ],
+        verbose_name="Note"
+    )
     is_approved = models.BooleanField(default=True, verbose_name="Approuvé")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Post communauté"
-        verbose_name_plural = "Posts communauté"
+        verbose_name = "Avis produit"
+        verbose_name_plural = "Avis produits"
         ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.title} - {self.author.username}"
-
-    def get_absolute_url(self):
-        return reverse('community') + f'#post-{self.id}'
 
     def get_rating_stars(self):
         full_stars = '★' * self.rating if self.rating else ''
         empty_stars = '☆' * (5 - self.rating) if self.rating else '☆☆☆☆☆'
         return f'<span class="text-yellow-500">{full_stars}{empty_stars}</span>'
 
-class Comment(models.Model):
-    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='comments', verbose_name="Post")
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="Auteur")
-    content = models.TextField(verbose_name="Commentaire")
-    is_approved = models.BooleanField(default=False, verbose_name="Approuvé")
-    created_at = models.DateTimeField(auto_now_add=True)
+# class Comment(models.Model):
+#     post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='comments', verbose_name="Post")
+#     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="Auteur")
+#     content = models.TextField(verbose_name="Commentaire")
+#     is_approved = models.BooleanField(default=False, verbose_name="Approuvé")
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        verbose_name = "Commentaire"
-        verbose_name_plural = "Commentaires"
-        ordering = ['created_at']
+#     class Meta:
+#         verbose_name = "Commentaire"
+#         verbose_name_plural = "Commentaires"
+#         ordering = ['created_at']
 
-    def __str__(self):
-        return f"Commentaire de {self.author.username} sur {self.post.title}"
+    # def __str__(self):
+    #     return f"Commentaire de {self.author.username} sur {self.post.title}"

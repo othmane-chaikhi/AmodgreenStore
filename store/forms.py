@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
-from .models import CustomUser, Order, CommunityPost, Comment, Product, Category,ProductImage
+from .models import CustomUser, Order, CommunityPost,  Product, Category,ProductImage
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -61,60 +61,30 @@ class OrderForm(forms.ModelForm):
 
 
 class CommunityPostForm(forms.ModelForm):
-    RATING_CHOICES = [(i, f"{i} étoile{'s' if i > 1 else ''}") for i in range(1, 6)]
-    rating = forms.ChoiceField(
-        choices=RATING_CHOICES,
-        widget=forms.RadioSelect(),
-        required=False,
-        label='Note'
-    )
-
     class Meta:
         model = CommunityPost
-        fields = ['title', 'content', 'post_type', 'product', 'rating']
+        fields = ['title', 'content', 'product', 'rating']
         widgets = {
-            'post_type': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'onchange': 'toggleReviewFields()'}),
             'product': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
+            'rating': forms.RadioSelect(),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.initial.get('post_type') == 'review':
-            self.fields['rating'].required = True
-            self.fields['product'].required = True
-        else:
-            self.fields['rating'].required = False
-            self.fields['product'].required = False
 
     def clean(self):
         cleaned_data = super().clean()
-        if cleaned_data.get('post_type') == 'review':
-            if not cleaned_data.get('product'):
-                self.add_error('product', "Un produit doit être sélectionné pour un avis")
-            if not cleaned_data.get('rating'):
-                self.add_error('rating', "Veuillez attribuer une note")
+        if not cleaned_data.get('product'):
+            self.add_error('product', "Un produit doit être sélectionné pour un avis.")
+        if not cleaned_data.get('rating'):
+            self.add_error('rating', "Veuillez attribuer une note.")
         return cleaned_data
 
 
-class CommentForm(forms.ModelForm):
-    """Formulaire pour commenter un post"""
-
-    class Meta:
-        model = Comment
-        fields = ['content']
-        widgets = {
-            'content': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Votre commentaire...'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            'content',
-            Submit('submit', '💬 Commenter', css_class='bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors')
-        )
-        self.fields['content'].widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-
+# class CommentForm(forms.ModelForm):
+#     class Meta:
+#         model = Comment
+#         fields = ['content']
+#         widgets = {
+#             'content': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Votre commentaire...'}),
+#         }
 
 class UserProfileForm(forms.ModelForm):
     """Formulaire pour modifier le profil utilisateur"""

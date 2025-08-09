@@ -62,6 +62,12 @@ def product_list(request):
     }
     return render(request, 'store/product_list.html', context)
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.db.models import Avg, Count
+from .models import Product, CommunityPost
+from .forms import CommunityPostForm
+
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk, is_available=True)
     related_products = Product.objects.filter(
@@ -83,12 +89,10 @@ def product_detail(request, pk):
     if request.method == 'POST' and 'submit_review' in request.POST:
         if not request.user.is_authenticated:
             messages.warning(request, "Vous devez être connecté pour poster un avis.")
-            return redirect('login') + f'?next={request.path}'
+            return redirect(f"{request.build_absolute_uri('/accounts/login/')}?next={request.path}")
 
-        post_data = request.POST.copy()
-        post_data['product'] = product.id
-
-        form = CommunityPostForm(post_data)
+        # Inclure request.FILES pour gérer l'upload d'image
+        form = CommunityPostForm(request.POST, request.FILES)
         if form.is_valid():
             review = form.save(commit=False)
             review.author = request.user
@@ -100,9 +104,7 @@ def product_detail(request, pk):
         else:
             messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
     else:
-        form = CommunityPostForm(initial={
-            'product': product.id
-        })
+        form = CommunityPostForm(initial={'product': product.id})
 
     context = {
         'product': product,
@@ -228,18 +230,3 @@ def about(request):
 def contact(request):
     return render(request, 'store/contact.html')
 
-def product_reviews(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    reviews = CommunityPost.objects.filter(
-        product=product,
-        is_approved=True,
-        rating__isnull=False
-    ).order_by('-created_at')
-
-    paginator = Paginator(reviews, 10)
-    page_obj = paginator.get_page(request.GET.get('page'))
-
-    return render(request, 'store/product_reviews.html', {
-        'product': product,
-        'page_obj': page_obj,
-    })

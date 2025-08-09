@@ -1,0 +1,187 @@
+<!-- Section Avis Produit -->
+<section class="mt-12 bg-white rounded-lg shadow-sm p-6">
+    <h2 class="text-2xl font-bold text-stone-800 mb-6">
+        <i class="fas fa-star text-yellow-500 mr-2"></i>
+        Avis clients
+    </h2>
+
+    <!-- Note moyenne -->
+    <div class="flex items-center mb-8">
+        <div class="text-4xl font-bold text-stone-800 mr-4">
+            {{ avg_rating|default:"-" }}
+        </div>
+        <div class="flex items-center mr-6">
+            {% if avg_rating %}
+            <div class="flex mr-2">
+                {% for i in "12345" %}
+                {% if avg_rating >= forloop.counter %}
+                <i class="fas fa-star text-yellow-500 text-xl"></i>
+                {% else %}
+                <i class="far fa-star text-yellow-500 text-xl"></i>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <span class="text-stone-600">{{ review_count }} avis</span>
+            {% else %}
+            <span class="text-stone-500">Aucun avis pour le moment</span>
+            {% endif %}
+        </div>
+        {% if review_count > 0 %}
+        <a href="{% url 'product_reviews' product.pk %}" class="text-olive-600 hover:text-olive-700 font-medium">
+            Voir tous les avis <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Liste des avis récents -->
+    <div class="space-y-6 mb-8">
+        {% for review in product_reviews %}
+        <div class="border-b border-stone-100 pb-6 last:border-0">
+            <div class="flex items-center mb-3">
+                <div
+                    class="w-10 h-10 bg-olive-600 rounded-full flex items-center justify-center text-white font-semibold">
+                    {{ review.author.first_name.0|default:review.author.username.0 }}
+                </div>
+                <div class="ml-3">
+                    <div class="font-medium text-stone-800">
+                        {{ review.author.first_name|default:review.author.username }}
+                    </div>
+                    <div class="text-sm text-stone-500">
+                        {{ review.created_at|date:"d M Y" }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center mb-2">
+                <div class="flex mr-2">
+                    {% for i in "12345" %}
+                    {% if review.rating >= forloop.counter %}
+                    <i class="fas fa-star text-yellow-500"></i>
+                    {% else %}
+                    <i class="far fa-star text-yellow-500"></i>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                <span class="text-sm text-stone-600">{{ review.rating }}/5</span>
+            </div>
+
+            <h4 class="font-semibold text-stone-800 mb-2">{{ review.title }}</h4>
+            <p class="text-stone-600 mb-3">{{ review.content }}</p>
+
+            <!-- Image de l'avis -->
+            {% if review.image %}
+            <div class="mb-3">
+                <img src="{{ review.image.url }}" alt="Photo avis" class="rounded-lg max-h-64 object-cover shadow-sm">
+            </div>
+            {% endif %}
+
+            <!-- Boutons modifier/supprimer si auteur -->
+            {% if user == review.author %}
+            <div class="flex space-x-4 mt-2 items-center">
+                <a href="{% url 'review_edit' review.id %}"
+                    class="text-blue-600 hover:underline text-sm inline-flex items-center">
+                    <i class="fas fa-edit mr-1"></i>Modifier
+                </a>
+
+                <form method="post" action="{% url 'review_delete' review.id %}"
+                    onsubmit="return confirm('Voulez-vous vraiment supprimer cet avis ?');" class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="text-red-600 hover:underline text-sm inline-flex items-center bg-red-100 
+                   px-2 py-1 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 transition">
+                        <i class="fas fa-trash-alt mr-1"></i>Supprimer
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+
+            {% empty %}
+            <div class="text-center py-8 text-stone-500">
+                <i class="fas fa-star text-4xl mb-4"></i>
+                <p>Soyez le premier à donner votre avis sur ce produit !</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Formulaire d'avis -->
+        <div id="review-form" class="bg-stone-50 rounded-lg p-6">
+            <h3 class="text-xl font-semibold text-stone-800 mb-4">
+                <i class="fas fa-pen-alt text-olive-600 mr-2"></i>
+                Donnez votre avis
+            </h3>
+
+            {% if user.is_authenticated %}
+            <form method="post" enctype="multipart/form-data" action="{% url 'product_detail' product.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="submit_review" value="1">
+                <input type="hidden" name="post_type" value="review">
+                <input type="hidden" name="product" value="{{ product.id }}">
+
+                <!-- Champ note -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-stone-700 mb-2">
+                        Votre note *
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        {% for value in "54321" %}
+                        <div class="flex items-center">
+                            <input type="radio" id="rating-{{ value }}" name="rating" value="{{ value }}"
+                                class="hidden peer" required {% if forloop.first %}checked{% endif %}>
+                            <label for="rating-{{ value }}"
+                                class="cursor-pointer text-2xl text-stone-300 hover:text-yellow-400 peer-checked:text-yellow-500 transition-colors">
+                                ★
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if review_form.rating.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ review_form.rating.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Champ titre -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-stone-700 mb-2">
+                        Titre de votre avis *
+                    </label>
+                    <input type="text" name="title" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-olive-500"
+                        value="{{ review_form.title.value|default:'' }}">
+                </div>
+
+                <!-- Champ contenu -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-stone-700 mb-2">
+                        Votre avis détaillé *
+                    </label>
+                    <textarea name="content" rows="4" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-olive-500">{{ review_form.content.value|default:'' }}</textarea>
+                </div>
+
+                <!-- Champ image -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-stone-700 mb-2">
+                        Photo (optionnelle)
+                    </label>
+                    <input type="file" name="image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                              file:rounded-md file:border-0 file:text-sm file:font-semibold 
+                              file:bg-olive-100 file:text-olive-700 hover:file:bg-olive-200">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-olive-600 hover:bg-olive-700 text-white py-3 px-6 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-paper-plane mr-2"></i> Publier votre avis
+                </button>
+            </form>
+            {% else %}
+            <div class="text-center py-6">
+                <p class="text-stone-600 mb-4">Vous devez être connecté pour donner votre avis.</p>
+                <a href="{% url 'login' %}?next={{ request.path }}#review-form"
+                    class="inline-block bg-olive-600 hover:bg-olive-700 text-white px-6 py-2 rounded-lg font-medium">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Se connecter
+                </a>
+            </div>
+            {% endif %}
+        </div>
+</section>

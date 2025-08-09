@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_tailwind',
     'store.apps.StoreConfig',  # Only use the AppConfig version
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [

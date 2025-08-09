@@ -38,20 +38,6 @@ def notify_new_post(sender, instance, created, **kwargs):
         )
         send_telegram_message(message)
 
-
-# @receiver(post_save, sender=Comment)
-# def notify_new_comment(sender, instance, created, **kwargs):
-#     if created:
-#         author = instance.author.username
-#         post_title = instance.post.title
-#         content_preview = instance.content[:60]
-#         message = (
-#             f"💬 تعليق جديد من <b>{author}</b> على المنشور <b>{post_title}</b>:\n"
-#             f"<i>{content_preview}...</i>"
-#         )
-#         send_telegram_message(message)
-
-
 @receiver(post_delete, sender=Product)
 def delete_product_image_files(sender, instance, **kwargs):
     """Supprime le fichier image principale du disque après suppression du produit"""
@@ -64,3 +50,12 @@ def delete_productimage_file(sender, instance, **kwargs):
     """Supprime le fichier image secondaire du disque après suppression de l'image"""
     if instance.image and os.path.isfile(instance.image.path):
         os.remove(instance.image.path)
+        
+@receiver(post_delete, sender=CommunityPost)
+def delete_review_image_file(sender, instance, **kwargs):
+    """Supprime l'image du disque après suppression d'un avis"""
+    if instance.image and os.path.isfile(instance.image.path):
+        try:
+            os.remove(instance.image.path)
+        except FileNotFoundError:
+            pass

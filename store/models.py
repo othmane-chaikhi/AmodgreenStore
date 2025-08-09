@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from PIL import Image
 import os
-
+from django.conf import settings
 # =========================
 # Utilisateur personnalisé
 # =========================
@@ -65,14 +65,12 @@ class Product(models.Model):
     def average_rating(self):
         from django.db.models import Avg
         return self.communitypost_set.filter(
-            post_type='review',
             rating__isnull=False,
             is_approved=True
         ).aggregate(Avg('rating'))['rating__avg']
 
     def review_count(self):
         return self.communitypost_set.filter(
-            post_type='review',
             is_approved=True
         ).count()
 
@@ -215,11 +213,15 @@ class CartItem(models.Model):
 # Communauté
 # =========================
 
+from django.db import models
+from django.conf import settings
+from PIL import Image
+
 class CommunityPost(models.Model):
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="Auteur")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Auteur")
     title = models.CharField(max_length=200, verbose_name="Titre")
     content = models.TextField(verbose_name="Contenu")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Produit lié")
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="Produit lié")
     rating = models.PositiveSmallIntegerField(
         choices=[
             (5, '★★★★★ - Excellent'),
@@ -230,6 +232,7 @@ class CommunityPost(models.Model):
         ],
         verbose_name="Note"
     )
+    image = models.ImageField(upload_to='reviews/', blank=True, null=True, verbose_name="Photo")
     is_approved = models.BooleanField(default=True, verbose_name="Approuvé")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -239,25 +242,24 @@ class CommunityPost(models.Model):
         verbose_name_plural = "Avis produits"
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        """Sauvegarde et compresse l'image principale"""
+        super().save(*args, **kwargs)  # Sauvegarde initiale
+
+        if self.image:
+            img_path = self.image.path
+            img = Image.open(img_path)
+
+            # Redimensionner si trop grand
+            max_size = (800, 800)
+            img.thumbnail(max_size)
+
+            # Conversion en RGB si PNG avec transparence
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+
+            # Compression JPEG qualité 70
+            img.save(img_path, format='JPEG', quality=70, optimize=True)
+
     def __str__(self):
         return f"{self.title} - {self.author.username}"
-
-    def get_rating_stars(self):
-        full_stars = '★' * self.rating if self.rating else ''
-        empty_stars = '☆' * (5 - self.rating) if self.rating else '☆☆☆☆☆'
-        return f'<span class="text-yellow-500">{full_stars}{empty_stars}</span>'
-
-# class Comment(models.Model):
-#     post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='comments', verbose_name="Post")
-#     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="Auteur")
-#     content = models.TextField(verbose_name="Commentaire")
-#     is_approved = models.BooleanField(default=False, verbose_name="Approuvé")
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     class Meta:
-#         verbose_name = "Commentaire"
-#         verbose_name_plural = "Commentaires"
-#         ordering = ['created_at']
-
-    # def __str__(self):
-    #     return f"Commentaire de {self.author.username} sur {self.post.title}"

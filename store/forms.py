@@ -63,11 +63,23 @@ class OrderForm(forms.ModelForm):
 class CommunityPostForm(forms.ModelForm):
     class Meta:
         model = CommunityPost
-        fields = ['title', 'content', 'product', 'rating']
+        fields = ['title', 'content', 'product', 'rating', 'image']
         widgets = {
-            'product': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
-            'rating': forms.RadioSelect(),
+            'rating': forms.RadioSelect(attrs={'class': 'your-custom-class'}),
+            'title': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-olive-500',
+                'placeholder': 'Titre de votre avis',
+            }),
+            'content': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-olive-500',
+                'rows': 4,
+                'placeholder': 'Votre avis détaillé',
+            }),
+            'image': forms.ClearableFileInput(attrs={
+                'class': 'w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-olive-100 file:text-olive-700 hover:file:bg-olive-200'
+            }),
         }
+
 
     def clean(self):
         cleaned_data = super().clean()
@@ -76,15 +88,6 @@ class CommunityPostForm(forms.ModelForm):
         if not cleaned_data.get('rating'):
             self.add_error('rating', "Veuillez attribuer une note.")
         return cleaned_data
-
-
-# class CommentForm(forms.ModelForm):
-#     class Meta:
-#         model = Comment
-#         fields = ['content']
-#         widgets = {
-#             'content': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Votre commentaire...'}),
-#         }
 
 class UserProfileForm(forms.ModelForm):
     """Formulaire pour modifier le profil utilisateur"""

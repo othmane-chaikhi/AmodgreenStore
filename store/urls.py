@@ -1,12 +1,11 @@
 from django.urls import path
-from . import views, views_admin, views_cart
+from . import views, views_admin, views_cart , views_avis
 
 urlpatterns = [
     # Pages principales
     path('', views.home, name='home'),
     path('produits/', views.product_list, name='product_list'),
     path('produit/<int:pk>/', views.product_detail, name='product_detail'),
-    path('produit/<int:pk>/avis/', views.product_reviews, name='product_reviews'),
     path('commander/', views.order_create, name='order_create'),
     path('a-propos/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
@@ -21,11 +20,6 @@ urlpatterns = [
     path('cart/remove/<int:item_id>/', views_cart.remove_from_cart, name='remove_from_cart'),
     path('cart/summary/', views_cart.cart_summary, name='cart_summary'),
     path('cart/recapitulatif/', views_cart.cart_summary, name='cart_summary'),  # يمكن حذف واحدة إذا رغبت
-
-    # Communauté
-    # path('communaute/', views.community, name='community'),
-    # path('communaute/nouveau-post/', views.create_post, name='create_post'),
-    # path('communaute/commenter/<int:post_id>/', views.add_comment, name='add_comment'),
 
     # Admin dashboard & gestion
     path('admin-dashboard/', views_admin.admin_dashboard, name='admin_dashboard'),
@@ -48,4 +42,11 @@ urlpatterns = [
     # Exportation
     path('admin-dashboard/export/pdf/', views_admin.export_orders_pdf, name='export_orders_pdf'),
     path('admin-dashboard/export/excel/', views_admin.export_orders_excel, name='export_orders_excel'),
+
+    # Avis produit
+    path('produit/<int:pk>/avis/ajouter/', views_avis.review_create, name='review_create'),
+    path('avis/<int:review_id>/modifier/', views_avis.review_edit, name='review_edit'),
+    path('avis/<int:review_id>/supprimer/', views_avis.review_delete, name='review_delete'),
+    path('produit/<int:pk>/avis/', views_avis.product_reviews, name='product_reviews'),
+
 ]

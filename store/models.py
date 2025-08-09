@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from PIL import Image
+import os
 
 # =========================
 # Utilisateur personnalisé
@@ -34,6 +35,7 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Product(models.Model):
     name = models.CharField(max_length=200, verbose_name="Nom du produit")
@@ -75,20 +77,47 @@ class Product(models.Model):
         ).count()
 
     def save(self, *args, **kwargs):
+        """Sauvegarde et compresse l'image principale"""
         super().save(*args, **kwargs)
+
         if self.image:
-            img = Image.open(self.image.path)
-            if img.height > 600 or img.width > 600:
-                img.thumbnail((600, 600))
-                img.save(self.image.path)
+            img_path = self.image.path
+            img = Image.open(img_path)
+
+            # Redimensionner si trop grand
+            max_size = (800, 800)
+            img.thumbnail(max_size)
+
+            # Conversion en RGB si PNG avec transparence
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+
+            # Compression JPEG qualité 70
+            img.save(img_path, format='JPEG', quality=70, optimize=True)
+
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='productimage_set')
-
     image = models.ImageField(upload_to='products/')
 
     def __str__(self):
         return f"Image for {self.product.name}"
+
+    def save(self, *args, **kwargs):
+        """Compresse les images secondaires"""
+        super().save(*args, **kwargs)
+
+        if self.image:
+            img_path = self.image.path
+            img = Image.open(img_path)
+            max_size = (800, 800)
+            img.thumbnail(max_size)
+
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+
+            img.save(img_path, format='JPEG', quality=70, optimize=True)
+
 
 # =========================
 # Commandes

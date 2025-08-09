@@ -1,4 +1,3 @@
-#store/context_processors.py
 from .utils import get_or_create_cart  
 
 def cart_count(request):

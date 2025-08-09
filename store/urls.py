@@ -42,6 +42,9 @@ urlpatterns = [
 
     path('admin-dashboard/comment/<int:comment_id>/toggle/', views_admin.toggle_comment_approval, name='toggle_comment_approval'),
 
+    path('product/<int:pk>/edit/', views_admin.product_update, name='product_update'),
+    path('product/<int:pk>/delete-image/', views_admin.delete_product_image, name='delete_product_image'),
+
     # Exportation
     path('admin-dashboard/export/pdf/', views_admin.export_orders_pdf, name='export_orders_pdf'),
     path('admin-dashboard/export/excel/', views_admin.export_orders_excel, name='export_orders_excel'),

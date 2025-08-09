@@ -1,7 +1,10 @@
-from django.db.models.signals import pre_save
+import os
+from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.sessions.models import Session
-from .models import Cart
+from .models import Cart, Product, ProductImage, Order, CommunityPost, Comment
+from .telegram import send_telegram_message
+
 
 @receiver(pre_save, sender=Session)
 def delete_anonymous_carts(sender, instance, **kwargs):
@@ -10,22 +13,17 @@ def delete_anonymous_carts(sender, instance, **kwargs):
     """
     Cart.objects.filter(session_key=instance.session_key, user__isnull=True).delete()
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from .models import Order
-from .telegram import send_telegram_message
 
 @receiver(post_save, sender=Order)
 def notify_order_created(sender, instance, created, **kwargs):
     if created:
         order = instance
         items = order.items.all()
-        
         if items.exists():
-#         
+            # Construire un message (à adapter selon ta logique)
+            message = f"Nouvelle commande #{order.pk} avec {items.count()} article(s)."
             send_telegram_message(message)
 
-from .models import CommunityPost, Comment
 
 @receiver(post_save, sender=CommunityPost)
 def notify_new_post(sender, instance, created, **kwargs):
@@ -33,8 +31,13 @@ def notify_new_post(sender, instance, created, **kwargs):
         title = instance.title
         author = instance.author.username
         post_type = instance.get_post_type_display()
-        message = f"🗣️ منشور جديد في المجتمع: <b>{title}</b>\n👤 من طرف: <b>{author}</b>\n📌 النوع: <i>{post_type}</i>"
+        message = (
+            f"🗣️ منشور جديد في المجتمع: <b>{title}</b>\n"
+            f"👤 من طرف: <b>{author}</b>\n"
+            f"📌 النوع: <i>{post_type}</i>"
+        )
         send_telegram_message(message)
+
 
 @receiver(post_save, sender=Comment)
 def notify_new_comment(sender, instance, created, **kwargs):
@@ -42,5 +45,22 @@ def notify_new_comment(sender, instance, created, **kwargs):
         author = instance.author.username
         post_title = instance.post.title
         content_preview = instance.content[:60]
-        message = f"💬 تعليق جديد من <b>{author}</b> على المنشور <b>{post_title}</b>:\n<i>{content_preview}...</i>"
+        message = (
+            f"💬 تعليق جديد من <b>{author}</b> على المنشور <b>{post_title}</b>:\n"
+            f"<i>{content_preview}...</i>"
+        )
         send_telegram_message(message)
+
+
+@receiver(post_delete, sender=Product)
+def delete_product_image_files(sender, instance, **kwargs):
+    """Supprime le fichier image principale du disque après suppression du produit"""
+    if instance.image and os.path.isfile(instance.image.path):
+        os.remove(instance.image.path)
+
+
+@receiver(post_delete, sender=ProductImage)
+def delete_productimage_file(sender, instance, **kwargs):
+    """Supprime le fichier image secondaire du disque après suppression de l'image"""
+    if instance.image and os.path.isfile(instance.image.path):
+        os.remove(instance.image.path)

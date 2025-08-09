@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, views_admin, views_cart , views_avis
+from .views import views, views_admin, views_cart, views_avis
 
 urlpatterns = [
     # Pages principales
@@ -19,14 +19,13 @@ urlpatterns = [
     path('cart/add/<int:product_id>/', views_cart.add_to_cart, name='add_to_cart'),
     path('cart/remove/<int:item_id>/', views_cart.remove_from_cart, name='remove_from_cart'),
     path('cart/summary/', views_cart.cart_summary, name='cart_summary'),
-    path('cart/recapitulatif/', views_cart.cart_summary, name='cart_summary'),  # يمكن حذف واحدة إذا رغبت
+    path('cart/recapitulatif/', views_cart.cart_summary, name='cart_summary'),  # Tu peux supprimer une des deux URLs si redondantes
 
     # Admin dashboard & gestion
     path('admin-dashboard/', views_admin.admin_dashboard, name='admin_dashboard'),
     path('admin-dashboard/product/create/', views_admin.product_create, name='product_create'),
     path('admin-dashboard/product/<int:pk>/update/', views_admin.product_update, name='product_update'),
     path('admin-dashboard/product/<int:pk>/delete/', views_admin.product_delete, name='product_delete'),
-
     path('admin-dashboard/category/create/', views_admin.category_create, name='category_create'),
 
     path('admin-dashboard/order/<int:order_id>/', views_admin.order_detail, name='order_detail'),
@@ -34,8 +33,7 @@ urlpatterns = [
     path('admin-dashboard/order/<int:order_id>/<str:status>/', views_admin.update_order_status, name='update_order_status'),
     path('admin-dashboard/orders/delete/<int:order_id>/', views_admin.delete_order, name='delete_order'),
 
-    # path('admin-dashboard/comment/<int:comment_id>/toggle/', views_admin.toggle_comment_approval, name='toggle_comment_approval'),
-
+    # Pour la gestion des images et modification produit
     path('product/<int:pk>/edit/', views_admin.product_update, name='product_update'),
     path('product/<int:pk>/delete-image/', views_admin.delete_product_image, name='delete_product_image'),
 
@@ -48,5 +46,4 @@ urlpatterns = [
     path('avis/<int:review_id>/modifier/', views_avis.review_edit, name='review_edit'),
     path('avis/<int:review_id>/supprimer/', views_avis.review_delete, name='review_delete'),
     path('produit/<int:pk>/avis/', views_avis.product_reviews, name='product_reviews'),
-
 ]

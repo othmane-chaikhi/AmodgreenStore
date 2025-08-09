@@ -135,26 +135,3 @@ class CommunityPostAdmin(admin.ModelAdmin):
         self.message_user(request, f"{queryset.count()} posts désapprouvés.")
     unapprove_posts.short_description = "Désapprouver les posts sélectionnés"
 
-# @admin.register(Comment)
-# class CommentAdmin(admin.ModelAdmin):
-#     list_display = ('author', 'post', 'content_preview', 'is_approved', 'created_at')
-#     list_filter = ('is_approved', 'created_at')
-#     search_fields = ('content', 'author__username', 'post__title')
-#     readonly_fields = ('created_at',)
-#     list_editable = ('is_approved',)
-
-#     def content_preview(self, obj):
-#         return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
-#     content_preview.short_description = "Aperçu du contenu"
-
-#     actions = ['approve_comments', 'unapprove_comments']
-
-#     def approve_comments(self, request, queryset):
-#         queryset.update(is_approved=True)
-#         self.message_user(request, f"{queryset.count()} commentaires approuvés.")
-#     approve_comments.short_description = "Approuver les commentaires sélectionnés"
-
-#     def unapprove_comments(self, request, queryset):
-#         queryset.update(is_approved=False)
-#         self.message_user(request, f"{queryset.count()} commentaires désapprouvés.")
-#     unapprove_comments.short_description = "Désapprouver les commentaires sélectionnés"

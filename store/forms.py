@@ -3,11 +3,16 @@ from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
-from .models import CustomUser, Order, CommunityPost,  Product, Category,ProductImage
+
+from .models import (
+    CustomUser, Order, CommunityPost,
+    Product, Category, ProductImage
+)
 
 
 class CustomUserCreationForm(UserCreationForm):
     """Formulaire d'inscription personnalisé"""
+
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30, required=True, label="Prénom")
     last_name = forms.CharField(max_length=30, required=True, label="Nom")
@@ -27,10 +32,15 @@ class CustomUserCreationForm(UserCreationForm):
             Row(Column('phone'), Column('city'), css_class='form-row'),
             'password1',
             'password2',
-            Submit('submit', 'S\'inscrire', css_class='w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors')
+            Submit(
+                'submit', "S'inscrire",
+                css_class='w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors'
+            )
         )
         for field in self.fields.values():
-            field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+            field.widget.attrs.update({
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+            })
 
 
 class OrderForm(forms.ModelForm):
@@ -54,10 +64,15 @@ class OrderForm(forms.ModelForm):
             Row(Column('full_name'), Column('phone'), css_class='form-row'),
             Row(Column('city'), Column('address'), css_class='form-row'),
             'notes',
-            Submit('submit', '🛒 Envoyer ma commande', css_class='w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg')
+            Submit(
+                'submit', '🛒 Envoyer ma commande',
+                css_class='w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg'
+            )
         )
         for field in self.fields.values():
-            field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+            field.widget.attrs.update({
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+            })
 
 
 class CommunityPostForm(forms.ModelForm):
@@ -76,10 +91,14 @@ class CommunityPostForm(forms.ModelForm):
                 'placeholder': 'Votre avis détaillé',
             }),
             'image': forms.ClearableFileInput(attrs={
-                'class': 'w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-olive-100 file:text-olive-700 hover:file:bg-olive-200'
+                'class': (
+                    'w-full text-sm text-gray-500 '
+                    'file:mr-4 file:py-2 file:px-4 file:rounded-md '
+                    'file:border-0 file:text-sm file:font-semibold '
+                    'file:bg-olive-100 file:text-olive-700 hover:file:bg-olive-200'
+                )
             }),
         }
-
 
     def clean(self):
         cleaned_data = super().clean()
@@ -88,6 +107,7 @@ class CommunityPostForm(forms.ModelForm):
         if not cleaned_data.get('rating'):
             self.add_error('rating', "Veuillez attribuer une note.")
         return cleaned_data
+
 
 class UserProfileForm(forms.ModelForm):
     """Formulaire pour modifier le profil utilisateur"""
@@ -107,22 +127,33 @@ class UserProfileForm(forms.ModelForm):
             'email',
             Row(Column('phone'), Column('city'), css_class='form-row'),
             'bio',
-            Submit('submit', '✅ Mettre à jour', css_class='bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors')
+            Submit(
+                'submit', '✅ Mettre à jour',
+                css_class='bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors'
+            )
         )
         for field in self.fields.values():
-            field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+            field.widget.attrs.update({
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+            })
+
 
 class ProductImageForm(forms.ModelForm):
     class Meta:
         model = ProductImage
         fields = ['image']
 
+
 class ProductForm(forms.ModelForm):
     """Formulaire pour ajouter ou modifier un produit"""
 
     class Meta:
         model = Product
-        fields = ['name', 'name_ar', 'description', 'description_ar', 'ingredients', 'ingredients_ar', 'price', 'image', 'category', 'is_available']
+        fields = [
+            'name', 'name_ar', 'description', 'description_ar',
+            'ingredients', 'ingredients_ar', 'price', 'image',
+            'category', 'is_available'
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -131,10 +162,13 @@ class ProductForm(forms.ModelForm):
             'name', 'name_ar', 'description', 'description_ar',
             'ingredients', 'ingredients_ar', 'price',
             'image', 'category', 'is_available',
-            Submit('submit', '💾 Enregistrer', css_class='bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded')
+            Submit('submit', '💾 Enregistrer',
+                   css_class='bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded')
         )
         for field in self.fields.values():
-            field.widget.attrs['class'] = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+            field.widget.attrs.update({
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+            })
 
 
 class ConfirmOrderForm(forms.Form):

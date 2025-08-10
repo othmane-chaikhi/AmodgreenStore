@@ -4,23 +4,228 @@
 {% block title %}Créer un produit{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto py-8">
-    <h1 class="text-2xl font-bold mb-6">Ajouter un nouveau produit</h1>
+<div class="max-w-6xl mx-auto py-8 px-4">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Ajouter un nouveau produit</h1>
 
-    <form method="post" enctype="multipart/form-data" class="space-y-6 bg-white p-6 rounded shadow">
+    <form method="post" enctype="multipart/form-data" class="space-y-6 bg-white p-6 rounded-lg shadow-md">
         {% csrf_token %}
-        {{ form|crispy }}
-
-        <!-- ✅ حقل رفع الصور المتعددة -->
-        <div>
-            <label for="id_image" class="block text-sm font-medium text-gray-700 mb-2">Images supplémentaires</label>
-            <input type="file" name="image" id="id_image" multiple class="block w-full border border-gray-300 rounded px-3 py-2">
+        {{ form.non_field_errors }}
+        
+        <!-- Main Product Form -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                {{ form.name|as_crispy_field }}
+                {{ form.name_ar|as_crispy_field }}
+                {{ form.category|as_crispy_field }}
+                {{ form.price|as_crispy_field }}
+                {{ form.is_available|as_crispy_field }}
+            </div>
+            <div>
+                {{ form.description|as_crispy_field }}
+                {{ form.description_ar|as_crispy_field }}
+            </div>
+            <div>
+                {{ form.ingredients|as_crispy_field }}
+                {{ form.ingredients_ar|as_crispy_field }}
+            </div>
+            <div>
+                {{ form.image|as_crispy_field }}
+            </div>
         </div>
 
-        <button type="submit" class="bg-olive-600 text-white px-6 py-2 rounded hover:bg-olive-700 transition">
-            Enregistrer
-        </button>
-        <a href="{% url 'admin_dashboard' %}" class="ml-4 text-stone-600 hover:underline">Annuler</a>
+        <!-- Additional Images -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Images supplémentaires</label>
+                <input type="file" name="images" multiple 
+                       class="block w-full text-sm text-gray-500
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-md file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-olive-50 file:text-olive-700
+                              hover:file:bg-olive-100"
+                       accept="image/*">
+                <p class="mt-1 text-xs text-gray-500">Formats supportés: JPG, PNG, WEBP. Taille maximale: 5MB.</p>
+            </div>
+            
+            <!-- Image Preview Container -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="images-preview-container">
+                <!-- New image previews will appear here -->
+            </div>
+        </div>
+
+        <!-- Variants Section -->
+        <div class="mt-8">
+            <h2 class="text-lg font-medium text-gray-900 mb-3">Variantes du produit</h2>
+            
+            {{ variant_formset.management_form }}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 border">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Défaut</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix (MAD)</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="variant-forms-container">
+                        {% for form in variant_formset %}
+                        <tr class="variant-form-row">
+                            <td class="px-4 py-3 whitespace-nowrap text-center">
+                                <input type="radio" name="default_variant" value="{{ forloop.counter0 }}"
+                                       class="default-variant-radio" {% if forloop.first %}checked{% endif %}>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {{ form.id }}
+                                {{ form.name|as_crispy_field }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {{ form.price|as_crispy_field }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {{ form.stock|as_crispy_field }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-center">
+                                <button type="button" class="remove-variant-btn text-red-500 hover:text-red-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <button type="button" id="add-variant-btn" 
+                    class="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-olive-600 hover:bg-olive-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-olive-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Ajouter une variante
+            </button>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="mt-8 flex justify-end space-x-3">
+            <a href="{% url 'admin_dashboard' %}" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-olive-500">
+                Annuler
+            </a>
+            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-olive-600 hover:bg-olive-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-olive-500">
+                Créer le produit
+            </button>
+        </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = "{{ csrf_token }}";
+    const variantFormPrefix = "{{ variant_formset.prefix }}";
+    let formCount = parseInt("{{ variant_formset.total_form_count }}");
+    const totalFormsInput = document.getElementById(`id_${variantFormPrefix}-TOTAL_FORMS`);
+
+    // Image preview for new uploads
+    const imageInput = document.querySelector('input[name="images"]');
+    const imagesPreviewContainer = document.getElementById('images-preview-container');
+    
+    if (imageInput) {
+        imageInput.addEventListener('change', function() {
+            // Clear previous previews
+            imagesPreviewContainer.innerHTML = '';
+            
+            Array.from(this.files).forEach(file => {
+                if (!file.type.match('image.*')) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'relative group';
+                    previewDiv.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-40 object-cover rounded-lg border">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg"></div>
+                        <span class="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-full">Nouvelle</span>
+                    `;
+                    imagesPreviewContainer.appendChild(previewDiv);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    }
+
+    // Add variant row
+    const addVariantBtn = document.getElementById('add-variant-btn');
+    const variantFormsContainer = document.getElementById('variant-forms-container');
+    
+    if (addVariantBtn && variantFormsContainer && totalFormsInput) {
+        addVariantBtn.addEventListener('click', function() {
+            const newFormHtml = `
+                <tr class="variant-form-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        <input type="radio" name="default_variant" value="${formCount}" 
+                               class="default-variant-radio">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="text" name="${variantFormPrefix}-${formCount}-name" 
+                               class="textinput textInput form-control w-full" 
+                               id="id_${variantFormPrefix}-${formCount}-name" required>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="number" name="${variantFormPrefix}-${formCount}-price" 
+                               class="numberinput form-control w-full" 
+                               id="id_${variantFormPrefix}-${formCount}-price" step="0.01" required>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="number" name="${variantFormPrefix}-${formCount}-stock" 
+                               class="numberinput form-control w-full" 
+                               id="id_${variantFormPrefix}-${formCount}-stock" required>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        <button type="button" class="remove-variant-btn text-red-500 hover:text-red-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            
+            variantFormsContainer.insertAdjacentHTML('beforeend', newFormHtml);
+            formCount++;
+            totalFormsInput.value = formCount;
+        });
+    }
+
+    // Remove variant row
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-variant-btn')) {
+            const row = e.target.closest('.variant-form-row');
+            if (row) {
+                const confirmDelete = confirm("Êtes-vous sûr de vouloir supprimer cette variante ?");
+                if (!confirmDelete) return;
+                
+                row.remove();
+                // Update form count
+                if (totalFormsInput) {
+                    totalFormsInput.value = document.querySelectorAll('.variant-form-row').length;
+                }
+            }
+        }
+    });
+
+    // Ensure only one default variant is selected
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('default-variant-radio') && e.target.checked) {
+            document.querySelectorAll('.default-variant-radio').forEach(radio => {
+                if (radio !== e.target) {
+                    radio.checked = false;
+                }
+            });
+        }
+    });
+});
+</script>
 {% endblock %}

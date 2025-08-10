@@ -2,7 +2,7 @@ import os
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.sessions.models import Session
-from .models import Cart, Product, ProductImage, Order, CommunityPost
+from .models import Cart, Product, ProductImage, Order, CommunityPost, ProductVariant
 from .telegram import send_telegram_message
 
 
@@ -57,3 +57,13 @@ def delete_review_image_file(sender, instance, **kwargs):
             os.remove(instance.image.path)
         except FileNotFoundError:
             pass
+
+@receiver(post_save, sender=ProductVariant)
+def update_default_variant(sender, instance, **kwargs):
+    if instance.is_default:
+        ProductVariant.objects.filter(
+            product=instance.product
+        ).exclude(pk=instance.pk).update(is_default=False)
+        instance.product.default_variant = instance
+        instance.product.save(update_fields=['default_variant'])
+        

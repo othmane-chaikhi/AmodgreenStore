@@ -3,16 +3,28 @@ from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
-
+from django.forms import BaseInlineFormSet, inlineformset_factory
 from .models import (
     CustomUser, Order, CommunityPost,
-    Product, Category, ProductImage
+    Product, Category, ProductImage,
+    ProductVariant
 )
 
 
-class CustomUserCreationForm(UserCreationForm):
-    """Formulaire d'inscription personnalisé"""
+class BaseStyledForm:
+    """Base class for forms with common styling"""
+    def _apply_common_styling(self):
+        common_classes = (
+            "w-full px-3 py-2 border border-gray-300 rounded-md "
+            "focus:outline-none focus:ring-2 focus:ring-green-500"
+        )
+        for field in self.fields.values():
+            existing_classes = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = f"{existing_classes} {common_classes}".strip()
 
+
+class CustomUserCreationForm(UserCreationForm, BaseStyledForm):
+    """Custom registration form with enhanced styling"""
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30, required=True, label="Prénom")
     last_name = forms.CharField(max_length=30, required=True, label="Nom")
@@ -21,7 +33,8 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = CustomUser
-        fields = ('username', 'first_name', 'last_name', 'email', 'phone', 'city', 'password1', 'password2')
+        fields = ('username', 'first_name', 'last_name', 'email', 
+                 'phone', 'city', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,20 +45,16 @@ class CustomUserCreationForm(UserCreationForm):
             Row(Column('phone'), Column('city'), css_class='form-row'),
             'password1',
             'password2',
-            Submit(
-                'submit', "S'inscrire",
-                css_class='w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors'
-            )
+            Submit('submit', "S'inscrire", css_class=(
+                'w-full bg-green-600 hover:bg-green-700 text-white '
+                'font-bold py-2 px-4 rounded transition-colors'
+            ))
         )
-        for field in self.fields.values():
-            field.widget.attrs.update({
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-            })
+        self._apply_common_styling()
 
 
-class OrderForm(forms.ModelForm):
-    """Formulaire de commande"""
-
+class OrderForm(forms.ModelForm, BaseStyledForm):
+    """Order form with address and notes"""
     class Meta:
         model = Order
         fields = ['full_name', 'phone', 'city', 'address', 'notes']
@@ -53,8 +62,14 @@ class OrderForm(forms.ModelForm):
             'full_name': forms.TextInput(attrs={'placeholder': 'Nom et prénom complets'}),
             'phone': forms.TextInput(attrs={'placeholder': '06XXXXXXXX ou +212XXXXXXXX'}),
             'city': forms.TextInput(attrs={'placeholder': 'Votre ville'}),
-            'address': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Adresse complète de livraison'}),
-            'notes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Remarques ou instructions spéciales (optionnel)'}),
+            'address': forms.Textarea(attrs={
+                'rows': 3, 
+                'placeholder': 'Adresse complète de livraison'
+            }),
+            'notes': forms.Textarea(attrs={
+                'rows': 3, 
+                'placeholder': 'Remarques ou instructions spéciales (optionnel)'
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -64,40 +79,27 @@ class OrderForm(forms.ModelForm):
             Row(Column('full_name'), Column('phone'), css_class='form-row'),
             Row(Column('city'), Column('address'), css_class='form-row'),
             'notes',
-            Submit(
-                'submit', '🛒 Envoyer ma commande',
-                css_class='w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg'
-            )
+            Submit('submit', '🛒 Envoyer ma commande', css_class=(
+                'w-full bg-green-600 hover:bg-green-700 text-white '
+                'font-bold py-3 px-6 rounded-lg transition-colors text-lg'
+            ))
         )
-        for field in self.fields.values():
-            field.widget.attrs.update({
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-            })
+        self._apply_common_styling()
 
 
-class CommunityPostForm(forms.ModelForm):
+class CommunityPostForm(forms.ModelForm, BaseStyledForm):
+    """Community post form with validation"""
     class Meta:
         model = CommunityPost
         fields = ['title', 'content', 'product', 'rating', 'image']
         widgets = {
-            'rating': forms.RadioSelect(attrs={'class': 'your-custom-class'}),
-            'title': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-olive-500',
-                'placeholder': 'Titre de votre avis',
-            }),
+            'rating': forms.RadioSelect(attrs={'class': 'rating-radio'}),
+            'title': forms.TextInput(attrs={'placeholder': 'Titre de votre avis'}),
             'content': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-olive-500',
-                'rows': 4,
-                'placeholder': 'Votre avis détaillé',
+                'rows': 4, 
+                'placeholder': 'Votre avis détaillé'
             }),
-            'image': forms.ClearableFileInput(attrs={
-                'class': (
-                    'w-full text-sm text-gray-500 '
-                    'file:mr-4 file:py-2 file:px-4 file:rounded-md '
-                    'file:border-0 file:text-sm file:font-semibold '
-                    'file:bg-olive-100 file:text-olive-700 hover:file:bg-olive-200'
-                )
-            }),
+            'image': forms.ClearableFileInput(attrs={'class': 'file-input-style'}),
         }
 
     def clean(self):
@@ -109,14 +111,16 @@ class CommunityPostForm(forms.ModelForm):
         return cleaned_data
 
 
-class UserProfileForm(forms.ModelForm):
-    """Formulaire pour modifier le profil utilisateur"""
-
+class UserProfileForm(forms.ModelForm, BaseStyledForm):
+    """User profile update form"""
     class Meta:
         model = CustomUser
         fields = ['first_name', 'last_name', 'email', 'phone', 'city', 'bio']
         widgets = {
-            'bio': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Parlez-nous de vous...'}),
+            'bio': forms.Textarea(attrs={
+                'rows': 4, 
+                'placeholder': 'Parlez-nous de vous...'
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -127,26 +131,28 @@ class UserProfileForm(forms.ModelForm):
             'email',
             Row(Column('phone'), Column('city'), css_class='form-row'),
             'bio',
-            Submit(
-                'submit', '✅ Mettre à jour',
-                css_class='bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors'
-            )
+            Submit('submit', '✅ Mettre à jour', css_class=(
+                'bg-green-600 hover:bg-green-700 text-white '
+                'font-bold py-2 px-4 rounded transition-colors'
+            ))
         )
-        for field in self.fields.values():
-            field.widget.attrs.update({
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-            })
+        self._apply_common_styling()
 
 
 class ProductImageForm(forms.ModelForm):
+    """Form for uploading product images"""
     class Meta:
         model = ProductImage
         fields = ['image']
+        widgets = {
+            'image': forms.ClearableFileInput(attrs={
+                'class': 'file-input-style'
+            })
+        }
 
 
-class ProductForm(forms.ModelForm):
-    """Formulaire pour ajouter ou modifier un produit"""
-
+class ProductForm(forms.ModelForm, BaseStyledForm):
+    """Main product form with multilingual fields"""
     class Meta:
         model = Product
         fields = [
@@ -154,6 +160,18 @@ class ProductForm(forms.ModelForm):
             'ingredients', 'ingredients_ar', 'price', 'image',
             'category', 'is_available'
         ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'description_ar': forms.Textarea(attrs={
+                'rows': 3, 
+                'dir': 'rtl'
+            }),
+            'ingredients': forms.Textarea(attrs={'rows': 3}),
+            'ingredients_ar': forms.Textarea(attrs={
+                'rows': 3, 
+                'dir': 'rtl'
+            }),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -162,16 +180,63 @@ class ProductForm(forms.ModelForm):
             'name', 'name_ar', 'description', 'description_ar',
             'ingredients', 'ingredients_ar', 'price',
             'image', 'category', 'is_available',
-            Submit('submit', '💾 Enregistrer',
-                   css_class='bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded')
+            Submit('submit', '💾 Enregistrer', css_class=(
+                "bg-green-600 hover:bg-green-700 text-white "
+                "font-bold py-2 px-4 rounded shadow-md transition"
+            ))
         )
-        for field in self.fields.values():
-            field.widget.attrs.update({
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-            })
+        self._apply_common_styling()
 
+
+class ProductVariantForm(forms.ModelForm, BaseStyledForm):
+    """Product variant form with default variant selection"""
+    is_default = forms.BooleanField(
+        required=False,
+        label="Variante par défaut",
+        widget=forms.RadioSelect(
+            attrs={'class': 'default-variant-radio'},
+            choices=[(True, 'Oui')]
+        )
+    )
+
+    class Meta:
+        model = ProductVariant
+        fields = ['name', 'price', 'stock', 'is_default']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.product.default_variant == self.instance:
+            self.initial['is_default'] = True
+        self._apply_common_styling()
+
+class ProductVariantFormSet(BaseInlineFormSet):
+    def save(self, commit=True):
+        # Save variants first
+        variants = super().save(commit=commit)
+        product = self.instance
+        
+        # Temporarily set default_variant to None to avoid the error
+        current_default = product.default_variant
+        product.default_variant = None
+        product.save()
+        
+        # Now find and set the default variant
+        for form in self.forms:
+            if form.cleaned_data.get('is_default') and not form.cleaned_data.get('DELETE', False):
+                product.default_variant = form.instance
+                break
+        
+        # If no variant is marked as default, use the first one
+        if not product.default_variant and variants:
+            product.default_variant = variants[0]
+        
+        # Save with the proper default variant
+        product.save()
+        
+        return variants
 
 class ConfirmOrderForm(forms.Form):
+    """Form for confirming delivery date"""
     delivery_date = forms.DateField(
         label="Date estimée de livraison",
         widget=forms.DateInput(attrs={'type': 'date'}),
@@ -179,7 +244,19 @@ class ConfirmOrderForm(forms.Form):
     )
 
 
-class CategoryForm(forms.ModelForm):
+class CategoryForm(forms.ModelForm, BaseStyledForm):
+    """Category form with multilingual support"""
     class Meta:
         model = Category
         fields = ['name', 'name_ar', 'description']
+
+
+from django.forms import inlineformset_factory
+
+ProductVariantFormSet = inlineformset_factory(
+    Product,
+    ProductVariant,
+    fields=('name', 'price', 'stock'),  # enleve 'is_default' d'ici
+    extra=1,
+    can_delete=True
+)

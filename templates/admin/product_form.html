@@ -1,124 +1,282 @@
 {% extends 'base.html' %}
-{% block title %}{{ title|default:"Formulaire produit" }}{% endblock %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title|default:"Modifier le produit" }}{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto py-6">
-    <h1 class="text-2xl font-bold mb-4">{{ title|default:"Formulaire produit" }}</h1>
-    <form method="post" enctype="multipart/form-data" class="space-y-6 bg-white p-6 rounded shadow">
+<div class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ title|default:"Modifier le produit" }}</h1>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-6 bg-white p-6 rounded-lg shadow-md">
         {% csrf_token %}
-        {{ form.as_p }}
-
-        <!-- ✅ Champ multi-upload -->
-        <div>
-            <label for="id_images" class="block text-sm font-medium text-gray-700 mb-2">
-                Ajouter de nouvelles images
-            </label>
-            <input type="file" name="images" id="id_images" multiple
-                   class="block w-full border border-gray-300 rounded px-3 py-2">
-        </div>
-
-        <!-- ✅ Images existantes -->
-        <div class="mt-6">
-            <h2 class="text-lg font-semibold mb-3">Images existantes</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                
-                {% if product.image %}
-                <!-- Image principale -->
-                <div class="relative group border rounded overflow-hidden shadow" id="image-main">
-                    <img src="{{ product.image.url }}" alt="Image principale" class="w-full h-40 object-cover">
-                    <button type="button" 
-                            class="delete-btn absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                            data-id="main" data-type="main">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                    <div class="absolute bottom-0 bg-black bg-opacity-50 text-white text-xs px-2 py-1">
-                        Principale
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Images supplémentaires -->
-                {% for img in images %}
-                <div class="relative group border rounded overflow-hidden shadow" id="image-{{ img.id }}">
-                    <img src="{{ img.image.url }}" alt="Image" class="w-full h-40 object-cover">
-                    <button type="button" 
-                            class="delete-btn absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                            data-id="{{ img.id }}" data-type="extra">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-                {% empty %}
-                <p class="text-gray-500">Aucune image supplémentaire.</p>
-                {% endfor %}
+        {{ form.non_field_errors }}
+        
+        <!-- Main Product Form -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                {{ form.name|as_crispy_field }}
+                {{ form.name_ar|as_crispy_field }}
+                {{ form.category|as_crispy_field }}
+                {{ form.price|as_crispy_field }}
+                {{ form.is_available|as_crispy_field }}
+            </div>
+            <div>
+                {{ form.description|as_crispy_field }}
+                {{ form.description_ar|as_crispy_field }}
+            </div>
+            <div>
+                {{ form.ingredients|as_crispy_field }}
+                {{ form.ingredients_ar|as_crispy_field }}
+            </div>
+            <div>
+                {{ form.image|as_crispy_field }}
             </div>
         </div>
 
-        <button type="submit" class="bg-olive-600 hover:bg-olive-700 text-white px-4 py-2 rounded">
-            Enregistrer
-        </button>
-        <a href="{% url 'admin_dashboard' %}" class="ml-4 text-gray-600 hover:underline">Annuler</a>
+        <!-- Image Upload Section -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Ajouter des images supplémentaires</label>
+                <div class="flex items-center gap-4">
+                    <label class="flex-1">
+                        <input type="file" name="images" multiple 
+                               class="block w-full text-sm text-gray-500
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-md file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-olive-50 file:text-olive-700
+                                      hover:file:bg-olive-100"
+                               accept="image/*">
+                    </label>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Formats supportés: JPG, PNG, WEBP. Taille maximale: 5MB.</p>
+            </div>
+
+            <!-- Existing Images Gallery -->
+            <div class="mt-4">
+                <h2 class="text-lg font-medium text-gray-900 mb-3">Images existantes</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="images-container">
+                    {% if product.image %}
+                    <div class="relative group" id="image-main">
+                        <img src="{{ product.image.url }}" alt="Image principale" 
+                             class="w-full h-40 object-cover rounded-lg border">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg"></div>
+                        <span class="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-full">Principale</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% for img in images %}
+                    <div class="relative group" id="image-{{ img.id }}">
+                        <img src="{{ img.image.url }}" alt="Image supplémentaire" 
+                             class="w-full h-40 object-cover rounded-lg border">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg"></div>
+                        <button type="button"
+                                class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                                data-id="{{ img.id }}" data-type="extra" aria-label="Supprimer image supplémentaire">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 col-span-full">Aucune image supplémentaire.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Variants Section -->
+        <div class="mt-8">
+            <h2 class="text-lg font-medium text-gray-900 mb-3">Variantes du produit</h2>
+            
+            {{ variant_formset.management_form }}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 border">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Défaut</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix (MAD)</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="variant-forms-container">
+                        {% for form in variant_formset %}
+                        <tr class="variant-form-row">
+                            <td class="px-4 py-3 whitespace-nowrap text-center">
+                                <input type="radio" name="default_variant" value="{{ forloop.counter0 }}"
+                                       class="default-variant-radio" 
+                                       {% if form.instance.is_default or forloop.first and not product.default_variant %}checked{% endif %}>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {{ form.id }}
+                                {{ form.name|as_crispy_field }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {{ form.price|as_crispy_field }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {{ form.stock|as_crispy_field }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-center">
+                                {% if form.instance.pk %}
+                                    {{ form.DELETE|as_crispy_field }}
+                                {% else %}
+                                    <button type="button" class="remove-variant-btn text-red-500 hover:text-red-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <button type="button" id="add-variant-btn" 
+                    class="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-olive-600 hover:bg-olive-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-olive-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Ajouter une variante
+            </button>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="mt-8 flex justify-end space-x-3">
+            <a href="{% url 'admin_dashboard' %}" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-olive-500">
+                Annuler
+            </a>
+            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-olive-600 hover:bg-olive-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-olive-500">
+                Mettre à jour
+            </button>
+        </div>
     </form>
 </div>
 
-<!-- ✅ Script AJAX suppression -->
 <script>
-document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        let imgId = this.dataset.id;
-        let imgType = this.dataset.type;
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = "{{ csrf_token }}";
+    const productId = "{{ product.pk|default:'' }}";
+    const variantFormPrefix = "{{ variant_formset.prefix }}";
+    let formCount = parseInt("{{ variant_formset.total_form_count }}");
+    const totalFormsInput = document.getElementById(`id_${variantFormPrefix}-TOTAL_FORMS`);
 
-        fetch("{% url 'delete_product_image' pk=product.pk %}", {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": "{{ csrf_token }}",
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ id: imgId, type: imgType })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                if (imgType === "extra") {
-                    document.getElementById("image-" + imgId).remove();
-                } else if (imgType === "main") {
-                    const mainDiv = document.getElementById("image-main");
-                    if(mainDiv) mainDiv.remove();
+    // Image deletion
+    document.querySelectorAll('[data-type]').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            if (!productId) return;
+            
+            const imgId = this.dataset.id;
+            const imgType = this.dataset.type;
+            const imgElement = document.getElementById(`image-${imgId}`);
+            const confirmDelete = confirm("Êtes-vous sûr de vouloir supprimer cette image ?");
+            
+            if (!confirmDelete) return;
+
+            try {
+                const response = await fetch(`/fr/product/${productId}/delete-image/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id: imgId, type: imgType })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    imgElement.remove();
+                    // Show success message
+                    const message = document.createElement('div');
+                    message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg';
+                    message.textContent = 'Image supprimée avec succès';
+                    document.body.appendChild(message);
+                    setTimeout(() => message.remove(), 3000);
+                } else {
+                    alert(data.error || "Erreur lors de la suppression");
                 }
-            } else {
-                alert(data.error || "Erreur lors de la suppression");
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Erreur réseau lors de la suppression");
             }
         });
     });
-});
-</script>
 
-<!-- ✅ Script preview nouvelles images sélectionnées -->
-<script>
-const inputImages = document.getElementById('id_images');
-const container = document.querySelector('.grid.grid-cols-2.md\\:grid-cols-3.gap-4');
-
-inputImages.addEventListener('change', function() {
-    // Supprimer les previews précédentes si besoin
-    const previews = container.querySelectorAll('.preview-new-image');
-    previews.forEach(el => el.remove());
-
-    Array.from(this.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const div = document.createElement('div');
-            div.classList.add('relative', 'group', 'border', 'rounded', 'overflow-hidden', 'shadow', 'preview-new-image');
-            div.style.width = "100%";
-            div.style.height = "160px";
-
-            div.innerHTML = `
-                <img src="${e.target.result}" alt="${file.name}" class="w-full h-40 object-cover" />
-                <div class="absolute bottom-0 bg-black bg-opacity-50 text-white text-xs px-2 py-1">Nouvelle</div>
+    // Add variant row
+    const addVariantBtn = document.getElementById('add-variant-btn');
+    const variantFormsContainer = document.getElementById('variant-forms-container');
+    
+    if (addVariantBtn && variantFormsContainer && totalFormsInput) {
+        addVariantBtn.addEventListener('click', function() {
+            const newFormHtml = `
+                <tr class="variant-form-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        <input type="radio" name="default_variant" value="${formCount}" 
+                               class="default-variant-radio">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="hidden" name="${variantFormPrefix}-${formCount}-id" id="id_${variantFormPrefix}-${formCount}-id">
+                        <input type="text" name="${variantFormPrefix}-${formCount}-name" 
+                               class="textinput textInput form-control w-full" 
+                               id="id_${variantFormPrefix}-${formCount}-name" required>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="number" name="${variantFormPrefix}-${formCount}-price" 
+                               class="numberinput form-control w-full" 
+                               id="id_${variantFormPrefix}-${formCount}-price" step="0.01" required>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="number" name="${variantFormPrefix}-${formCount}-stock" 
+                               class="numberinput form-control w-full" 
+                               id="id_${variantFormPrefix}-${formCount}-stock" required>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        <button type="button" class="remove-variant-btn text-red-500 hover:text-red-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
             `;
-            container.appendChild(div);
-        };
-        reader.readAsDataURL(file);
+            
+            variantFormsContainer.insertAdjacentHTML('beforeend', newFormHtml);
+            formCount++;
+            totalFormsInput.value = formCount;
+        });
+    }
+
+    // Remove variant row
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-variant-btn')) {
+            const row = e.target.closest('.variant-form-row');
+            if (row) {
+                const confirmDelete = confirm("Êtes-vous sûr de vouloir supprimer cette variante ?");
+                if (!confirmDelete) return;
+                
+                row.remove();
+                // Update form count
+                if (totalFormsInput) {
+                    totalFormsInput.value = document.querySelectorAll('.variant-form-row').length;
+                }
+            }
+        }
+    });
+
+    // Ensure only one default variant is selected
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('default-variant-radio') && e.target.checked) {
+            document.querySelectorAll('.default-variant-radio').forEach(radio => {
+                if (radio !== e.target) {
+                    radio.checked = false;
+                }
+            });
+        }
     });
 });
 </script>
-
 {% endblock %}

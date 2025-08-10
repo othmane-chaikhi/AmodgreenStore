@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 
-from store.models import Product, CommunityPost
+from store.models import Product, CommunityPost,ProductVariant, CartItem
 from store.forms import CommunityPostForm
 
 def product_reviews(request, pk):

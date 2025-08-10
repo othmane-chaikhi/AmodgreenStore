@@ -17,39 +17,41 @@
         </ol>
     </nav>
 
-    <!-- Contenu principal -->
+    <!-- Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <!-- Images produit -->
+        <!-- Product Images -->
         <div x-data="{ activeImage: '{{ product.image.url }}' }" class="space-y-6">
             <div class="bg-white rounded-xl overflow-hidden shadow">
                 <img :src="activeImage" alt="{{ product.name }}" class="w-full h-96 object-contain">
             </div>
 
             <div class="flex gap-3 overflow-x-auto">
-                <!-- Image principale -->
-                <img @click="activeImage = '{{ product.image.url }}'" src="{{ product.image.url }}"
-                    class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
-                    :class="activeImage === '{{ product.image.url }}' ? 'border-olive-600' : 'border-gray-300'">
+                <!-- Main Image -->
+                <img @click="activeImage = '{{ product.image.url }}'" 
+                     src="{{ product.image.url }}"
+                     class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
+                     :class="activeImage === '{{ product.image.url }}' ? 'border-olive-600' : 'border-gray-300'">
 
-                <!-- Images supplémentaires -->
+                <!-- Additional Images -->
                 {% for img in product.productimage_set.all %}
-                <img @click="activeImage = '{{ img.image.url }}'" src="{{ img.image.url }}"
-                    class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
-                    :class="activeImage === '{{ img.image.url }}' ? 'border-olive-600' : 'border-gray-300'">
+                <img @click="activeImage = '{{ img.image.url }}'" 
+                     src="{{ img.image.url }}"
+                     class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
+                     :class="activeImage === '{{ img.image.url }}' ? 'border-olive-600' : 'border-gray-300'">
                 {% endfor %}
             </div>
         </div>
 
-        <!-- Détails produit -->
+        <!-- Product Details -->
         <div class="space-y-6">
-            <!-- Catégorie -->
+            <!-- Category -->
             <div>
                 <span class="inline-block bg-olive-600 text-white px-4 py-1 rounded-full text-sm font-medium">
                     <i class="fas fa-tag mr-1"></i> {{ product.category.name }}
                 </span>
             </div>
 
-            <!-- Nom + Prix -->
+            <!-- Name + Price -->
             <div>
                 <h1 class="text-3xl md:text-4xl font-bold text-stone-800">{{ product.name }}</h1>
                 <p class="text-4xl text-olive-600 font-bold mt-4">{{ product.price }} MAD</p>
@@ -61,7 +63,7 @@
                 <p class="text-stone-700">{{ product.description }}</p>
             </div>
 
-            <!-- Ingrédients -->
+            <!-- Ingredients (optional) -->
             {% if product.ingredients %}
             <div>
                 <h3 class="text-xl font-semibold text-stone-800 mb-2">
@@ -71,28 +73,70 @@
             </div>
             {% endif %}
 
-            <!-- Actions -->
-            <div class="space-y-4 pt-6 border-t border-stone-200">
-                <a href="{% url 'add_to_cart' product.id %}"
-                    class="block w-full bg-olive-600 hover:bg-olive-700 text-white px-6 py-4 rounded-lg font-semibold text-lg text-center transition">
-                    <i class="fas fa-shopping-cart mr-2"></i> Ajouter au panier
-                </a>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <a href="{% url 'product_list' %}"
-                        class="bg-stone-200 hover:bg-stone-300 text-stone-800 px-6 py-3 rounded-lg font-medium text-center">
-                        <i class="fas fa-arrow-left mr-2"></i>Retour
-                    </a>
-
-                    <button onclick="shareProduct()"
-                        class="bg-sage-600 hover:bg-sage-700 text-white px-6 py-3 rounded-lg font-medium w-full">
-                        <i class="fas fa-share mr-2"></i>Partager
-                    </button>
+            <!-- Variants - Improved Design -->
+            {% if product.variants.exists %}
+            <div class="space-y-3">
+                <h3 class="text-lg font-semibold text-stone-800">Options disponibles :</h3>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {% for variant in product.variants.all %}
+                    <div>
+                        <input type="radio" 
+                               name="variant" 
+                               id="variant-{{ variant.id }}" 
+                               value="{{ variant.id }}" 
+                               class="hidden peer" 
+                               {% if forloop.first %}checked{% endif %}
+                               {% if variant.stock == 0 %}disabled{% endif %}>
+                        
+                        <label for="variant-{{ variant.id }}" 
+                               class="block p-4 border-2 rounded-lg cursor-pointer transition-all
+                                      peer-checked:border-olive-600 peer-checked:bg-olive-50
+                                      hover:border-stone-400
+                                      {% if variant.stock == 0 %}opacity-60 border-dashed{% else %}border-stone-200{% endif %}">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="font-medium text-stone-800">{{ variant.name }}</span>
+                                    <span class="block text-olive-600 font-bold mt-1">{{ variant.price }} MAD</span>
+                                </div>
+                                {% if variant.stock == 0 %}
+                                <span class="bg-stone-100 text-stone-700 text-xs px-2 py-1 rounded">Rupture</span>
+                                {% endif %}
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Informations supplémentaires -->
-            <div class="bg-stone-50 rounded-lg p-6 space-y-3 border border-stone-200">
+            <!-- Actions -->
+            <form method="post" action="{% url 'add_to_cart' product.id %}">
+                {% csrf_token %}
+                {% if product.variants.exists %}
+                <input type="hidden" name="variant_id" id="variant-id-input" value="{{ product.variants.first.id }}">
+                {% endif %}
+
+                <button type="submit"
+                    class="mt-6 w-full bg-olive-600 hover:bg-olive-700 text-white px-6 py-4 rounded-lg font-semibold text-lg text-center transition">
+                    <i class="fas fa-shopping-cart mr-2"></i> Ajouter au panier
+                </button>
+            </form>
+
+            <div class="grid grid-cols-2 gap-4 mt-4">
+                <a href="{% url 'product_list' %}"
+                   class="bg-stone-200 hover:bg-stone-300 text-stone-800 px-6 py-3 rounded-lg font-medium text-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Retour
+                </a>
+
+                <button onclick="shareProduct()"
+                        class="bg-sage-600 hover:bg-sage-700 text-white px-6 py-3 rounded-lg font-medium w-full">
+                    <i class="fas fa-share mr-2"></i>Partager
+                </button>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="bg-stone-50 rounded-lg p-6 space-y-3 border border-stone-200 mt-6">
                 <h4 class="font-semibold text-stone-800 mb-3">
                     <i class="fas fa-info-circle mr-2 text-olive-600"></i>Informations
                 </h4>
@@ -108,11 +152,12 @@
             </div>
         </div>
     </div>
-{% include 'includes/review_section.html' %}
 
-    <!-- Produits similaires -->
+    {% include 'includes/review_section.html' %}
+
+    <!-- Related Products -->
     {% if related_products %}
-    <section>
+    <section class="mt-12">
         <h2 class="text-2xl font-bold text-stone-800 mb-8">
             <i class="fas fa-leaf mr-3 text-sage-600"></i>
             Produits similaires
@@ -123,7 +168,7 @@
             <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
                 {% if related_product.image %}
                 <img src="{{ related_product.image.url }}" alt="{{ related_product.name }}"
-                    class="w-full h-40 object-cover">
+                     class="w-full h-40 object-cover">
                 {% else %}
                 <div class="w-full h-40 bg-stone-200 flex items-center justify-center">
                     <i class="fas fa-leaf text-3xl text-stone-400"></i>
@@ -131,22 +176,18 @@
                 {% endif %}
 
                 <div class="p-4">
-                    <h3 class="font-semibold text-stone-800 mb-2 line-clamp-1">
-                        {{ related_product.name }}
-                    </h3>
+                    <h3 class="font-semibold text-stone-800 mb-2 line-clamp-1">{{ related_product.name }}</h3>
 
                     <div class="flex items-center justify-between">
-                        <span class="text-lg font-bold text-olive-600">
-                            {{ related_product.price }} MAD
-                        </span>
+                        <span class="text-lg font-bold text-olive-600">{{ related_product.price }} MAD</span>
 
                         <div class="flex gap-1">
                             <a href="{{ related_product.get_absolute_url }}"
-                                class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded text-xs transition-colors">
+                               class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded text-xs transition-colors">
                                 Voir
                             </a>
                             <a href="{% url 'add_to_cart' related_product.id %}"
-                                class="bg-olive-600 hover:bg-olive-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                               class="bg-olive-600 hover:bg-olive-700 text-white px-2 py-1 rounded text-xs transition-colors">
                                 Ajouter
                             </a>
                         </div>
@@ -160,51 +201,24 @@
 </div>
 
 <script>
-    function shareProduct() {
-        if (navigator.share) {
-            navigator.share({
-                title: '{{ product.name }} - AmodGreen',
-                text: '{{ product.description|truncatewords:20 }}',
-                url: window.location.href
-            });
-        } else {
-            // Fallback: copier l'URL
-            navigator.clipboard.writeText(window.location.href);
-            alert('Lien copié dans le presse-papier !');
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const starInputs = document.querySelectorAll('input[name="rating"]');
-        const starLabels = document.querySelectorAll('label[for^="rating-"]');
-
-        function updateStars(ratingValue) {
-            starLabels.forEach(label => {
-                const starValue = parseInt(label.getAttribute('for').split('-')[1]);
-                if (starValue <= ratingValue) {
-                    label.classList.add('text-yellow-500');
-                    label.classList.remove('text-stone-300');
-                } else {
-                    label.classList.add('text-stone-300');
-                    label.classList.remove('text-yellow-500');
-                }
-            });
-        }
-
-        starLabels.forEach(label => {
-            label.addEventListener('click', function () {
-                const ratingValue = parseInt(this.getAttribute('for').split('-')[1]);
-                updateStars(ratingValue);
-            });
+function shareProduct() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ product.name }} - AmodGreen',
+            text: '{{ product.description|truncatewords:20 }}',
+            url: window.location.href
         });
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Lien copié dans le presse-papier !');
+    }
+}
 
-        // Initialisation selon valeur cochée au chargement
-        const checkedInput = document.querySelector('input[name="rating"]:checked');
-        if (checkedInput) {
-            updateStars(parseInt(checkedInput.value));
-        } else {
-            updateStars(0);
-        }
+// Update variant selection
+document.querySelectorAll('input[name="variant"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('variant-id-input').value = this.value;
     });
+});
 </script>
 {% endblock %}

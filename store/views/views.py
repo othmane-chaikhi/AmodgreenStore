@@ -10,7 +10,7 @@ from django.conf import settings
 
 from store.models import (
     Product, Category, Order, OrderItem,
-    CommunityPost, CustomUser, Cart
+    CommunityPost, CustomUser, Cart, ProductVariant, CartItem
 )
 from store.forms import (
     OrderForm, CustomUserCreationForm, CommunityPostForm,
@@ -64,6 +64,7 @@ def product_list(request):
 
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk, is_available=True)
+
     related_products = Product.objects.filter(
         category=product.category,
         is_available=True
@@ -80,6 +81,9 @@ def product_detail(request, pk):
         count=Count('id')
     )
 
+    # Récupération des variantes du produit
+    variants = ProductVariant.objects.filter(product=product)
+
     if request.method == 'POST' and 'submit_review' in request.POST:
         if not request.user.is_authenticated:
             messages.warning(request, "Vous devez être connecté pour poster un avis.")
@@ -92,7 +96,7 @@ def product_detail(request, pk):
             review.product = product
             review.is_approved = True
             review.save()
-            messages.success(request, "Votre avis a été ajouté avec succès!")
+            messages.success(request, "Votre avis a été ajouté avec succès !")
             return redirect('product_detail', pk=product.pk)
         else:
             messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
@@ -101,6 +105,7 @@ def product_detail(request, pk):
 
     context = {
         'product': product,
+        'variants': variants,
         'related_products': related_products,
         'product_reviews': product_reviews,
         'avg_rating': round(reviews_stats['avg_rating'], 1) if reviews_stats['avg_rating'] else None,
@@ -127,16 +132,16 @@ def order_create(request):
             for item in cart.items.all():
                 OrderItem.objects.create(
                     order=order,
-                    product=item.product,
+                    variant=item.variant,
                     quantity=item.quantity,
-                    price=item.product.price,
+                    price=item.variant.price,
                 )
             cart.items.all().delete()
             if not request.user.is_authenticated:
                 cart.delete()
 
             items_text = "\n".join([
-                f"• {item.product.name} x{item.quantity} = {item.price} درهم"
+                f"• {item.variant.product.name} ({item.variant.name}) x{item.quantity} = {item.price} درهم"
                 for item in order.items.all()
             ])
             message = f"""🛒 <b>طلب جديد!</b>
@@ -168,7 +173,7 @@ def order_create(request):
 
 def generate_order_message(order):
     items_text = "\n".join(
-        [f"📦 {item.quantity}x {item.product.name} ({item.price} MAD)"
+        [f"📦 {item.quantity}x {item.variant.product.name} ({item.variant.name}) ({item.price} MAD)"
          for item in order.items.all()]
     )
     total = sum(item.quantity * item.price for item in order.items.all())
@@ -187,7 +192,6 @@ def generate_order_message(order):
 📝 *Remarques:* {order.notes if order.notes else 'Aucune'}
 
 _Commande #{order.id} - {order.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
-
 
 def register_view(request):
     if request.method == 'POST':

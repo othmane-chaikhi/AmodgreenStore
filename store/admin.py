@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from .models import CustomUser, Category, Product, Order, CommunityPost
+from .models import CustomUser, Category, Product, ProductImage, ProductVariant, Order, CommunityPost
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -11,9 +11,10 @@ class CustomUserAdmin(UserAdmin):
 
     fieldsets = UserAdmin.fieldsets + (
         ('Informations supplémentaires', {
-            'fields': ('bio', 'phone', 'city')
+            'fields': ('bio', 'phone', 'city'),
         }),
     )
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -21,26 +22,26 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name', 'name_ar')
     readonly_fields = ('created_at',)
 
-from django.contrib import admin
-from .models import Product, ProductImage
-
-from django.utils.html import format_html
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
-    extra = 1  # عدد الحقول الفارغة التي تظهر عند إضافة صور جديدة
-    max_num = 10  # عدد الصور القصوى (اختياري)
+    extra = 1
+    max_num = 10
     readonly_fields = ('image_preview',)
 
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="100" height="100" />', obj.image.url)
-        return ""
+            return format_html(
+                '<img src="{}" width="100" height="100" style="object-fit: cover; border-radius: 8px;" />',
+                obj.image.url
+            )
+        return "-"
     image_preview.short_description = "Aperçu"
+
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    inlines = [ProductImageInline]  # ⬅️ هذا هو الجزء المهم
+    inlines = [ProductImageInline]
 
     list_display = ('name', 'category', 'price', 'is_available', 'image_preview', 'created_at')
     list_filter = ('category', 'is_available', 'created_at')
@@ -66,15 +67,20 @@ class ProductAdmin(admin.ModelAdmin):
 
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="100" height="100" />', obj.image.url)
-        return "-"
-    image_preview.short_description = "Image principale"
-
-    def image_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="100" height="100" style="object-fit: cover; border-radius: 8px;" />', obj.image.url)
+            return format_html(
+                '<img src="{}" width="100" height="100" style="object-fit: cover; border-radius: 8px;" />',
+                obj.image.url
+            )
         return "Pas d'image"
     image_preview.short_description = "Aperçu"
+
+
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display = ('product', 'name', 'price', 'stock')
+    list_filter = ('product',)
+    search_fields = ('product__name', 'name')
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -98,13 +104,15 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
     def produits_commandes(self, obj):
-        return ", ".join([f"{item.product.name} x{item.quantity}" for item in obj.items.all()])
+        # Ici on utilise item.variant.product.name car OrderItem référence une variante
+        return ", ".join([f"{item.variant.product.name} x{item.quantity}" for item in obj.items.all()])
     produits_commandes.short_description = "Produits"
+
 
 @admin.register(CommunityPost)
 class CommunityPostAdmin(admin.ModelAdmin):
-    list_display = ('title', 'author',  'is_approved', 'created_at')
-    list_filter = ( 'is_approved', 'created_at')
+    list_display = ('title', 'author', 'is_approved', 'created_at')
+    list_filter = ('is_approved', 'created_at')
     search_fields = ('title', 'content', 'author__username')
     readonly_fields = ('created_at', 'updated_at')
     list_editable = ('is_approved',)
@@ -122,16 +130,14 @@ class CommunityPostAdmin(admin.ModelAdmin):
         }),
     )
 
-    actions = ['delete_selected', 'approve_posts', 'unapprove_posts']
-
+    actions = ['approve_posts', 'unapprove_posts']
 
     def approve_posts(self, request, queryset):
-        queryset.update(is_approved=True)
-        self.message_user(request, f"{queryset.count()} posts approuvés.")
+        updated = queryset.update(is_approved=True)
+        self.message_user(request, f"{updated} post(s) approuvé(s).")
     approve_posts.short_description = "Approuver les posts sélectionnés"
 
     def unapprove_posts(self, request, queryset):
-        queryset.update(is_approved=False)
-        self.message_user(request, f"{queryset.count()} posts désapprouvés.")
+        updated = queryset.update(is_approved=False)
+        self.message_user(request, f"{updated} post(s) désapprouvé(s).")
     unapprove_posts.short_description = "Désapprouver les posts sélectionnés"
-

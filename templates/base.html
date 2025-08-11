@@ -41,6 +41,12 @@
                         propos</a>
                     <a href="{% url 'contact' %}"
                         class="text-stone-700 hover:text-olive-600 transition-colors">Contact</a>
+                    {% if user.is_staff %}
+
+                    <a class="text-stone-700 hover:text-olive-600 transition-colors" href="{% url 'admin_dashboard' %}">
+                        <i class="bi bi-gear me-1"></i>Dashboard
+                    </a>
+                    {% endif %}
                 </div>
 
                 <!-- User Menu -->
@@ -103,10 +109,20 @@
                     class="block px-3 py-2 text-stone-700 hover:text-olive-600">Produits</a>
                 <a href="{% url 'about' %}" class="block px-3 py-2 text-stone-700 hover:text-olive-600">À propos</a>
                 <a href="{% url 'contact' %}" class="block px-3 py-2 text-stone-700 hover:text-olive-600">Contact</a>
+                {% if user.is_staff %}
+                <a class="block px-3 py-2 text-stone-700 hover:text-olive-600" href="{% url 'admin_dashboard' %}">
+                    <i class="bi bi-gear me-1"></i>Dashboard
+                </a>
+                {% endif %}
                 {% if not user.is_authenticated %}
                 <a href="{% url 'login' %}" class="block px-3 py-2 text-stone-700 hover:text-olive-600">Connexion</a>
                 <a href="{% url 'register' %}"
                     class="block px-3 py-2 text-stone-700 hover:text-olive-600">S'inscrire</a>
+                {% else %}
+                <a href="{% url 'logout' %}"
+                        class="block px-3 py-2 text-stone-700 hover:text-olive-600">
+                        Déconnexion
+                    </a>
                 {% endif %}
             </div>
         </div>

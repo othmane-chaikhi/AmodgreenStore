@@ -4,6 +4,11 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns  # 👈 ضروري لدعم i18n
+from django.conf.urls import handler404, handler500
+from store.views import views_errors
+
+handler404 = views_errors.handler404
+handler500 = views_errors.handler500
 
 urlpatterns = [
     # هذا ضروري لتفعيل POST لتغيير اللغة من الفورم

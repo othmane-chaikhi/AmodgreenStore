@@ -77,7 +77,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
-    list_display = ('product', 'name', 'price', 'stock')
+    list_display = ('product', 'name', 'price')
     list_filter = ('product',)
     search_fields = ('product__name', 'name')
 

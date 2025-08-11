@@ -1,5 +1,10 @@
 from django.urls import path
 from .views import views, views_admin, views_cart, views_avis
+from django.conf.urls import handler404, handler500
+from .views import views_errors
+
+handler404 = views_errors.handler404
+handler500 = views_errors.handler500
 
 urlpatterns = [
     # Pages principales
@@ -27,7 +32,13 @@ urlpatterns = [
     path('admin-dashboard/product/<int:pk>/update/', views_admin.product_update, name='product_update'),
     path('admin-dashboard/product/<int:pk>/delete/', views_admin.product_delete, name='product_delete'),
     path('admin-dashboard/category/create/', views_admin.category_create, name='category_create'),
-
+    path('categories/', views_admin.category_list, name='category_list'),
+    path('categories/<int:pk>/update/', views_admin.category_update, name='category_update'),
+    path('categories/<int:pk>/delete/', views_admin.category_delete, name='category_delete'),
+    path('admin-dashboard/categories/', views_admin.category_list, name='category_list'),
+    path('admin-dashboard/orders/', views_admin.order_list, name='order_list'),
+    path('admin-dashboard/posts/', views_admin.post_list, name='post_list'),
+    path('admin-dashboard/produits/', views_admin.admin_product_list, name='admin_product_list'),
     path('admin-dashboard/order/<int:order_id>/', views_admin.order_detail, name='order_detail'),
     path('admin-dashboard/order/<int:order_id>/confirm/', views_admin.confirm_order, name='confirm_order'),
     path('admin-dashboard/order/<int:order_id>/<str:status>/', views_admin.update_order_status, name='update_order_status'),

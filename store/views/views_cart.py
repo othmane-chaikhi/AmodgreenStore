@@ -10,29 +10,24 @@ def add_to_cart(request, product_id):
     variants = ProductVariant.objects.filter(product=product)
 
     if not variants.exists():
-        # Create a default variant if none exists
+        # Crée une variante par défaut si aucune n'existe
         variant, created = ProductVariant.objects.get_or_create(
             product=product,
             name="Standard",
             defaults={
-                'price': product.price, 
-                'stock': 9999,
-                'is_default': True  # Mark as default
+                'price': product.price,
+                'is_default': True  # Marque comme défaut
             }
         )
-        # Update product's default variant reference
         product.default_variant = variant
         product.save(update_fields=['default_variant'])
     else:
         variant_id = request.POST.get('variant_id')
-        
-        # If no variant selected, use the product's current default variant
+
         if not variant_id:
             variant = product.default_variant
             if not variant:
-                # If no default variant set, use the first available variant
                 variant = variants.first()
-                # Set it as default if not already
                 if not variant.is_default:
                     variant.is_default = True
                     variant.save()
@@ -44,27 +39,23 @@ def add_to_cart(request, product_id):
 
     cart = get_or_create_cart(request)
 
-    # Check stock availability
-    if variant.stock <= 0:
-        messages.error(request, f"La variante '{variant.name}' est en rupture de stock.")
-        return redirect(product.get_absolute_url())
+    # Suppression de la vérification stock qui n'existe plus
+    # Tu peux réimplémenter une gestion stock si tu ajoutes ce champ
 
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
         variant=variant,
         defaults={'quantity': 1}
     )
-    
+
     if not created:
-        # Check if adding more would exceed stock
-        if cart_item.quantity + 1 > variant.stock:
-            messages.error(request, f"Quantité demandée non disponible pour '{variant.name}' (stock: {variant.stock})")
-            return redirect(product.get_absolute_url())
         cart_item.quantity += 1
         cart_item.save()
 
     messages.success(request, f"Le produit '{product.name}' ({variant.name}) a été ajouté au panier.")
     return redirect('product_list')
+
+
 def view_cart(request):
     cart = get_or_create_cart(request)
     return render(request, 'store/cart.html', {'cart': cart})

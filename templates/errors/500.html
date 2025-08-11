@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Erreur serveur - AmodIgren{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col items-center justify-center bg-stone-50 px-4">
+    <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg text-center">
+        <div class="mb-6 text-red-500">
+            <i class="fas fa-exclamation-triangle text-5xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-red-600 mb-4">Erreur serveur</h1>
+        <p class="text-stone-600 mb-6">
+            Une erreur interne s'est produite. Notre équipe a été notifiée.
+        </p>
+        <a href="{% url 'home' %}" 
+           class="inline-block px-6 py-3 bg-olive-600 hover:bg-olive-700 text-white rounded-lg transition">
+            Retour à l'accueil
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -10,7 +10,7 @@
             {% for item in cart.items.all %}
                 <li class="py-4 flex justify-between items-center">
                     <div>
-                        <p class="text-lg font-medium text-gray-800">{{ item.product.name }}</p>
+                        <p class="text-lg font-medium text-gray-800"> {{ item.variant.product.name }} - {{ item.variant.name }}</p>
                         <p class="text-sm text-gray-500">{{ item.quantity }} x {{ item.product.price }} MAD</p>
                     </div>
                     <p class="text-lg font-semibold text-green-700">{{ item.total_price }} MAD</p>

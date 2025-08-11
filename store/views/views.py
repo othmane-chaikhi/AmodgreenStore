@@ -64,7 +64,7 @@ def product_list(request):
 
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk, is_available=True)
-
+    # product = get_object_or_404(Product, pk=pk)
     related_products = Product.objects.filter(
         category=product.category,
         is_available=True
@@ -81,8 +81,8 @@ def product_detail(request, pk):
         count=Count('id')
     )
 
-    # Récupération des variantes du produit
-    variants = ProductVariant.objects.filter(product=product)
+    # Utilisation de la méthode sans filtrer sur stock
+    variants = product.available_variants()
 
     if request.method == 'POST' and 'submit_review' in request.POST:
         if not request.user.is_authenticated:
@@ -193,6 +193,7 @@ def generate_order_message(order):
 
 _Commande #{order.id} - {order.created_at.strftime('%d/%m/%Y à %H:%M')}_"""
 
+
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -231,3 +232,5 @@ def about(request):
 
 def contact(request):
     return render(request, 'store/contact.html')
+
+

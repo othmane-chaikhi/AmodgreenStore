@@ -150,9 +150,13 @@ class ProductImageForm(forms.ModelForm):
             })
         }
 
+from django import forms
+from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
 
 class ProductForm(forms.ModelForm, BaseStyledForm):
     """Main product form with multilingual fields"""
+
     class Meta:
         model = Product
         fields = [
@@ -174,6 +178,8 @@ class ProductForm(forms.ModelForm, BaseStyledForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # Récupérer formset s'il est passé en kwargs
+        self.variant_formset = kwargs.pop('variant_formset', None)
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.layout = Layout(
@@ -187,9 +193,43 @@ class ProductForm(forms.ModelForm, BaseStyledForm):
         )
         self._apply_common_styling()
 
+    def clean(self):
+        cleaned_data = super().clean()
+        price = cleaned_data.get('price')
+
+        # Validation obligatoire prix
+        if price is None:
+            raise ValidationError("Le prix du produit est obligatoire.")
+
+        # Validation égalité prix produit et variante par défaut
+        if self.variant_formset and self.variant_formset.is_valid():
+            # Trouver la variante par défaut sélectionnée
+            default_variant_index = self.data.get('default_variant')
+            if default_variant_index is None:
+                raise ValidationError("Veuillez sélectionner une variante par défaut.")
+
+            try:
+                default_variant_index = int(default_variant_index)
+            except (TypeError, ValueError):
+                raise ValidationError("Sélection variante par défaut invalide.")
+
+            if default_variant_index < 0 or default_variant_index >= len(self.variant_formset.forms):
+                raise ValidationError("Indice variante par défaut hors limite.")
+
+            default_variant_form = self.variant_formset.forms[default_variant_index]
+            variant_price = default_variant_form.cleaned_data.get('price')
+            if variant_price is None:
+                raise ValidationError("Le prix de la variante par défaut est invalide.")
+
+            if price != variant_price:
+                raise ValidationError("Le prix du produit doit être égal au prix de la variante par défaut.")
+
+        return cleaned_data
+
 
 class ProductVariantForm(forms.ModelForm, BaseStyledForm):
     """Product variant form with default variant selection"""
+
     is_default = forms.BooleanField(
         required=False,
         label="Variante par défaut",
@@ -201,7 +241,7 @@ class ProductVariantForm(forms.ModelForm, BaseStyledForm):
 
     class Meta:
         model = ProductVariant
-        fields = ['name', 'price', 'stock', 'is_default']
+        fields = ['name', 'price', 'is_default']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -209,30 +249,26 @@ class ProductVariantForm(forms.ModelForm, BaseStyledForm):
             self.initial['is_default'] = True
         self._apply_common_styling()
 
+
 class ProductVariantFormSet(BaseInlineFormSet):
     def save(self, commit=True):
-        # Save variants first
         variants = super().save(commit=commit)
         product = self.instance
-        
-        # Temporarily set default_variant to None to avoid the error
-        current_default = product.default_variant
+
+        # Reset default_variant
         product.default_variant = None
         product.save()
-        
-        # Now find and set the default variant
+
         for form in self.forms:
             if form.cleaned_data.get('is_default') and not form.cleaned_data.get('DELETE', False):
                 product.default_variant = form.instance
                 break
-        
-        # If no variant is marked as default, use the first one
+
+        # If no variant default, fallback to first
         if not product.default_variant and variants:
             product.default_variant = variants[0]
-        
-        # Save with the proper default variant
+
         product.save()
-        
         return variants
 
 class ConfirmOrderForm(forms.Form):
@@ -244,19 +280,34 @@ class ConfirmOrderForm(forms.Form):
     )
 
 
-class CategoryForm(forms.ModelForm, BaseStyledForm):
-    """Category form with multilingual support"""
+from django import forms
+
+class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ['name', 'name_ar', 'description']
-
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-olive-600 focus:border-olive-600',
+                'placeholder': 'Nom de la catégorie',
+            }),
+            'name_ar': forms.TextInput(attrs={
+                'class': 'w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-olive-600 focus:border-olive-600',
+                'placeholder': 'اسم الفئة',
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'w-full rounded border border-gray-300 px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-olive-600 focus:border-olive-600',
+                'rows': 4,
+                'placeholder': 'Description de la catégorie',
+            }),
+        }
 
 from django.forms import inlineformset_factory
 
 ProductVariantFormSet = inlineformset_factory(
     Product,
     ProductVariant,
-    fields=('name', 'price', 'stock'),  # enleve 'is_default' d'ici
+    fields=('name', 'price'), 
     extra=1,
     can_delete=True
 )

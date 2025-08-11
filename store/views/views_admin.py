@@ -1,11 +1,13 @@
 from django.contrib.auth.decorators import user_passes_test, login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator
+from django.shortcuts import render, get_object_or_404, redirect, reverse
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Prefetch
 from django.db import transaction
+from store.models import Order, Product, CommunityPost, ProductVariant, ProductImage, Category
+from store.forms import ProductForm, ProductVariantFormSet, CategoryForm
 import json
 import openpyxl
 from openpyxl.styles import Font, Alignment
@@ -13,36 +15,77 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-
-from store.forms import (
-    ProductForm, ProductVariantFormSet, CategoryForm
-)
-from store.models import (
-    Product, ProductVariant, ProductImage, Order, CommunityPost, Category
-)
-
+from django.db import models
 # --- Decorators ---
 def admin_required(view_func):
     """Restrict access to admin users only."""
     return user_passes_test(lambda u: u.is_authenticated and u.is_superuser)(view_func)
 
-
 # --- Dashboard ---
+from django.db.models import Prefetch
+from store.models import Order, OrderItem, Product, CommunityPost  # Ajoutez les imports manquants
+
 @admin_required
 def admin_dashboard(request):
-    orders_qs = Order.objects.filter(is_deleted=False).order_by('-created_at')
-    orders = Paginator(orders_qs, 10).get_page(request.GET.get('order_page'))
+    # Get orders with optimized queries
+    orders_qs = Order.objects.filter(is_deleted=False)\
+                        .prefetch_related(
+                            Prefetch('items', queryset=OrderItem.objects.select_related('variant'))
+                        )\
+                        .order_by('-created_at')
+    
+    # Pagination
+    orders_per_page = 10
+    orders_paginator = Paginator(orders_qs, orders_per_page)
+    page_number = request.GET.get('order_page', 1)
+    
+    try:
+        orders = orders_paginator.page(page_number)
+    except PageNotAnInteger:
+        orders = orders_paginator.page(1)
+    except EmptyPage:
+        orders = orders_paginator.page(orders_paginator.num_pages)
+
+    # Prepare stats
+    stats = [
+        {
+            'count': Product.objects.count(),
+            'label': 'Produits',
+            'color': 'text-olive-600',
+            'icon': '📦',
+            'url': reverse('admin_product_list')
+        },
+        {
+            'count': CommunityPost.objects.count(),
+            'label': 'Avis',
+            'color': 'text-blue-600',
+            'icon': '💬',
+            'url': reverse('post_list')
+        },
+        {
+            'count': orders_qs.filter(status='pending').count(),
+            'label': 'Commandes en cours',
+            'color': 'text-yellow-600',
+            'icon': '⏳',
+            'url': reverse('order_list') + '?status=pending'
+        },
+        {
+            'count': orders_qs.filter(status='delivered').count(),
+            'label': 'Commandes livrées',
+            'color': 'text-green-600',
+            'icon': '✅',
+            'url': reverse('order_list') + '?status=delivered'
+        },
+    ]
 
     context = {
-        'total_products': Product.objects.count(),
-        'total_posts': CommunityPost.objects.count(),
-        'orders_pending': orders_qs.filter(status='pending').count(),
-        'orders_delivered': orders_qs.filter(status='delivered').count(),
-        'products': Product.objects.order_by('-id')[:20],
+        'stats': stats,
+        'products': Product.objects.select_related('category').order_by('-id')[:20],
         'orders': orders,
+        'orders_count': orders_qs.count(),
+        'recent_orders_count': orders_per_page,
     }
     return render(request, 'admin/dashboard.html', context)
-
 
 # --- Order Management ---
 @admin_required
@@ -50,7 +93,6 @@ def update_order_status(request, order_id, status):
     Order.objects.filter(pk=order_id).update(status=status)
     messages.success(request, f"Statut de la commande #{order_id} mis à jour.")
     return redirect('admin_dashboard')
-
 
 @login_required
 def order_detail(request, order_id):
@@ -67,7 +109,6 @@ def order_detail(request, order_id):
 
     return render(request, 'admin/order_detail.html', {'order': order})
 
-
 @admin_required
 def delete_order(request, order_id):
     order = get_object_or_404(Order, pk=order_id)
@@ -77,70 +118,94 @@ def delete_order(request, order_id):
         return redirect('admin_dashboard')
     return render(request, 'admin/order_confirm_delete.html', {'order': order})
 
-
 # --- Product Management ---
 @admin_required
 def product_create(request):
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
         variant_formset = ProductVariantFormSet(request.POST, queryset=ProductVariant.objects.none())
+        form = ProductForm(request.POST, request.FILES, variant_formset=variant_formset)
+
         if form.is_valid() and variant_formset.is_valid():
             with transaction.atomic():
                 product = form.save(commit=False)
                 product.default_variant = None
                 product.save()
+
                 variant_formset.instance = product
                 variants = variant_formset.save()
+
+                # images supplémentaires
                 for img in request.FILES.getlist('images'):
                     ProductImage.objects.create(product=product, image=img)
+
             messages.success(request, "Produit créé avec succès.")
             return redirect('admin_dashboard')
     else:
-        form = ProductForm()
         variant_formset = ProductVariantFormSet(queryset=ProductVariant.objects.none())
-    return render(request, 'admin/product_create.html', {'form': form, 'variant_formset': variant_formset})
+        form = ProductForm(data=None, files=None, variant_formset=variant_formset)
 
+    return render(request, 'admin/product_create.html', {
+        'form': form,
+        'variant_formset': variant_formset,
+    })
 
 @admin_required
 def product_update(request, pk):
     product = get_object_or_404(Product, pk=pk)
+
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES, instance=product)
         variant_formset = ProductVariantFormSet(request.POST, instance=product)
+        form = ProductForm(request.POST, request.FILES, instance=product, variant_formset=variant_formset)
+
         if form.is_valid() and variant_formset.is_valid():
-            with transaction.atomic():
-                variants = variant_formset.save(commit=False)
-                for variant in variants:
-                    variant.save()
-                for deleted_form in variant_formset.deleted_forms:
-                    if deleted_form.instance.pk:
-                        deleted_form.instance.delete()
+            # Vérification suppression variante par défaut
+            default_variant = product.default_variant
+            trying_to_delete_default = False
+            for deleted_form in variant_formset.deleted_forms:
+                if deleted_form.instance.pk == default_variant.pk:
+                    trying_to_delete_default = True
+                    break
 
-                default_variant_index = request.POST.get('default_variant')
-                if default_variant_index is not None:
-                    try:
-                        product.variants.update(is_default=False)
-                        default_variant_form = variant_formset.forms[int(default_variant_index)]
-                        default_variant = default_variant_form.instance
-                        default_variant.is_default = True
-                        default_variant.save()
-                        product.default_variant = default_variant
-                    except (IndexError, ValueError):
+            if trying_to_delete_default:
+                variant_formset._non_form_errors = variant_formset.non_form_errors().copy()
+                variant_formset._non_form_errors.append("Vous ne pouvez pas supprimer la variante par défaut.")
+                messages.error(request, "Vous ne pouvez pas supprimer la variante par défaut.")
+            else:
+                with transaction.atomic():
+                    variants = variant_formset.save(commit=False)
+                    for variant in variants:
+                        variant.save()
+                    for deleted_form in variant_formset.deleted_forms:
+                        if deleted_form.instance.pk:
+                            deleted_form.instance.delete()
+
+                    # Gestion variante par défaut choisie
+                    default_variant_index = request.POST.get('default_variant')
+                    if default_variant_index is not None:
+                        try:
+                            product.variants.update(is_default=False)
+                            default_variant_form = variant_formset.forms[int(default_variant_index)]
+                            default_variant = default_variant_form.instance
+                            default_variant.is_default = True
+                            default_variant.save()
+                            product.default_variant = default_variant
+                        except (IndexError, ValueError):
+                            product.default_variant = None
+                    else:
                         product.default_variant = None
-                else:
-                    product.default_variant = None
 
-                form.save()
-                product.save()
+                    form.save()
+                    product.save()
 
-                for img in request.FILES.getlist('images'):
-                    ProductImage.objects.create(product=product, image=img)
+                    # Ajout images supplémentaires
+                    for img in request.FILES.getlist('images'):
+                        ProductImage.objects.create(product=product, image=img)
 
-            messages.success(request, "Produit mis à jour avec succès.")
-            return redirect('admin_dashboard')
+                messages.success(request, "Produit mis à jour avec succès.")
+                return redirect('admin_dashboard')
     else:
-        form = ProductForm(instance=product)
         variant_formset = ProductVariantFormSet(instance=product)
+        form = ProductForm(instance=product, variant_formset=variant_formset)
 
     return render(request, 'admin/product_form.html', {
         'form': form,
@@ -149,7 +214,6 @@ def product_update(request, pk):
         'images': product.additional_images.all(),
         'title': 'Modifier le produit',
     })
-
 
 @csrf_protect
 @admin_required
@@ -180,7 +244,6 @@ def delete_product_image(request, pk):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)})
 
-
 @admin_required
 def product_delete(request, pk):
     product = get_object_or_404(Product, pk=pk)
@@ -189,7 +252,6 @@ def product_delete(request, pk):
         messages.success(request, "Produit supprimé avec succès.")
         return redirect('admin_dashboard')
     return render(request, 'admin/product_confirm_delete.html', {'product': product})
-
 
 # --- Export ---
 @admin_required
@@ -238,7 +300,6 @@ def export_orders_excel(request):
     wb.save(response)
     return response
 
-
 @admin_required
 def export_orders_pdf(request):
     orders = Order.objects.prefetch_related(Prefetch('items', to_attr='prefetched_items')).order_by("-created_at")
@@ -282,7 +343,6 @@ def export_orders_pdf(request):
     doc.build(elements)
     return response
 
-
 # --- Category ---
 @admin_required
 def category_create(request):
@@ -291,12 +351,10 @@ def category_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Catégorie ajoutée avec succès.")
-            return redirect('admin_dashboard')
+            return redirect('category_list')
     else:
         form = CategoryForm()
     return render(request, 'admin/category_form.html', {'form': form})
-
-
 # --- Order Confirmation ---
 @login_required
 def confirm_order(request, order_id):
@@ -305,3 +363,144 @@ def confirm_order(request, order_id):
     order.save()
     messages.success(request, "Commande confirmée avec succès.")
     return redirect('admin_dashboard')
+
+#
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def order_list(request):
+    orders = Order.objects.all()
+    return render(request, 'admin/order_list.html', {'orders': orders})
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def post_list(request):
+    posts = CommunityPost.objects.all()
+    return render(request, 'admin/post_list.html', {'posts': posts})
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def category_list(request):
+    categories = Category.objects.annotate(
+        product_count=models.Count('product')
+    ).order_by('name')
+    return render(request, 'admin/category_list.html', {'categories': categories})
+
+@admin_required
+def category_update(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Catégorie mise à jour avec succès.")
+            return redirect('category_list')
+    else:
+        form = CategoryForm(instance=category)
+    return render(request, 'admin/category_form.html', {'form': form})
+
+@admin_required
+def category_delete(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == 'POST':
+        category.delete()
+        messages.success(request, "Catégorie supprimée avec succès.")
+        return redirect('category_list')
+    return render(request, 'admin/category_confirm_delete.html', {'category': category})
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def order_list(request):
+    status = request.GET.get('status', None)
+    
+    orders = Order.objects.all()
+    if status:
+        orders = orders.filter(status=status)
+    
+    # Pagination
+    paginator = Paginator(orders.order_by('-created_at'), 10)
+    page_number = request.GET.get('page')
+    try:
+        orders = paginator.page(page_number)
+    except PageNotAnInteger:
+        orders = paginator.page(1)
+    except EmptyPage:
+        orders = paginator.page(paginator.num_pages)
+    
+    context = {
+        'orders': orders,
+        'total_orders': Order.objects.count(),
+        'pending_orders': Order.objects.filter(status='pending').count(),
+        'delivered_orders': Order.objects.filter(status='delivered').count(),
+    }
+    return render(request, 'admin/order_list.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def post_list(request):
+    posts = CommunityPost.objects.select_related('author', 'product').order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    try:
+        posts = paginator.page(page_number)
+    except PageNotAnInteger:
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
+    
+    return render(request, 'admin/post_list.html', {'posts': posts})
+
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q
+from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import render
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_product_list(request):
+    # Récupérer les paramètres de filtrage et de recherche
+    search_query = request.GET.get('q', '')
+    category_filter = request.GET.get('category', '')
+    availability_filter = request.GET.get('availability', '')
+    
+    # Construire la requête de base
+    products = Product.objects.select_related('category').prefetch_related('variants')
+    
+    # Appliquer les filtres
+    if search_query:
+        products = products.filter(
+            Q(name__icontains=search_query) | 
+            Q(description__icontains=search_query) |
+            Q(category__name__icontains=search_query)
+        )
+    
+    if category_filter:
+        products = products.filter(category_id=category_filter)
+    
+    if availability_filter:
+        if availability_filter == 'available':
+            products = products.filter(is_available=True)
+        elif availability_filter == 'unavailable':
+            products = products.filter(is_available=False)
+    
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(products.order_by('-created_at'), 25)  # 25 produits par page
+    
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+    
+    context = {
+        'products': products,
+        'categories': Category.objects.all(),
+        'search_query': search_query,
+        'category_filter': category_filter,
+        'availability_filter': availability_filter,
+    }
+    return render(request, 'admin/product_list.html', context)

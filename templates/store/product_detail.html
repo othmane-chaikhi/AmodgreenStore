@@ -27,22 +27,20 @@
 
             <div class="flex gap-3 overflow-x-auto">
                 <!-- Main Image -->
-                <img @click="activeImage = '{{ product.image.url }}'" 
-                     src="{{ product.image.url }}"
-                     class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
-                     :class="activeImage === '{{ product.image.url }}' ? 'border-olive-600' : 'border-gray-300'">
+                <img @click="activeImage = '{{ product.image.url }}'" src="{{ product.image.url }}"
+                    class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
+                    :class="activeImage === '{{ product.image.url }}' ? 'border-olive-600' : 'border-gray-300'">
 
                 <!-- Additional Images -->
                 {% for img in product.productimage_set.all %}
-                <img @click="activeImage = '{{ img.image.url }}'" 
-                     src="{{ img.image.url }}"
-                     class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
-                     :class="activeImage === '{{ img.image.url }}' ? 'border-olive-600' : 'border-gray-300'">
+                <img @click="activeImage = '{{ img.image.url }}'" src="{{ img.image.url }}"
+                    class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
+                    :class="activeImage === '{{ img.image.url }}' ? 'border-olive-600' : 'border-gray-300'">
                 {% endfor %}
             </div>
         </div>
 
-        <!-- Product Details -->
+        <!-- Product Details (without description) -->
         <div class="space-y-6">
             <!-- Category -->
             <div>
@@ -54,13 +52,10 @@
             <!-- Name + Price -->
             <div>
                 <h1 class="text-3xl md:text-4xl font-bold text-stone-800">{{ product.name }}</h1>
-                <p class="text-4xl text-olive-600 font-bold mt-4">{{ product.price }} MAD</p>
-            </div>
-
-            <!-- Description -->
-            <div>
-                <h3 class="text-xl font-semibold text-stone-800 mb-2">Description</h3>
-                <p class="text-stone-700">{{ product.description }}</p>
+                <p id="product-price" class="text-4xl text-olive-600 font-bold mt-4">
+                    {{ product.get_default_variant_price }} MAD
+                </p>
+                <!-- Suppression de l'affichage du stock -->
             </div>
 
             <!-- Ingredients (optional) -->
@@ -74,34 +69,26 @@
             {% endif %}
 
             <!-- Variants - Improved Design -->
-            {% if product.variants.exists %}
+            {% if variants.exists %}
             <div class="space-y-3">
                 <h3 class="text-lg font-semibold text-stone-800">Options disponibles :</h3>
-                
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {% for variant in product.variants.all %}
+                    {% for variant in variants %}
                     <div>
-                        <input type="radio" 
-                               name="variant" 
-                               id="variant-{{ variant.id }}" 
-                               value="{{ variant.id }}" 
-                               class="hidden peer" 
-                               {% if forloop.first %}checked{% endif %}
-                               {% if variant.stock == 0 %}disabled{% endif %}>
-                        
-                        <label for="variant-{{ variant.id }}" 
+                        <input type="radio" name="variant" id="variant-{{ variant.id }}" value="{{ variant.id }}"
+                               class="hidden peer" {% if forloop.first %}checked{% endif %}>
+
+                        <label for="variant-{{ variant.id }}"
                                class="block p-4 border-2 rounded-lg cursor-pointer transition-all
                                       peer-checked:border-olive-600 peer-checked:bg-olive-50
-                                      hover:border-stone-400
-                                      {% if variant.stock == 0 %}opacity-60 border-dashed{% else %}border-stone-200{% endif %}">
+                                      hover:border-stone-400 border-stone-200"
+                               data-price="{{ variant.price }}">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <span class="font-medium text-stone-800">{{ variant.name }}</span>
                                     <span class="block text-olive-600 font-bold mt-1">{{ variant.price }} MAD</span>
                                 </div>
-                                {% if variant.stock == 0 %}
-                                <span class="bg-stone-100 text-stone-700 text-xs px-2 py-1 rounded">Rupture</span>
-                                {% endif %}
                             </div>
                         </label>
                     </div>
@@ -113,12 +100,12 @@
             <!-- Actions -->
             <form method="post" action="{% url 'add_to_cart' product.id %}">
                 {% csrf_token %}
-                {% if product.variants.exists %}
-                <input type="hidden" name="variant_id" id="variant-id-input" value="{{ product.variants.first.id }}">
+                {% if variants.exists %}
+                <input type="hidden" name="variant_id" id="variant-id-input" value="{{ variants.first.id }}">
                 {% endif %}
 
                 <button type="submit"
-                    class="mt-6 w-full bg-olive-600 hover:bg-olive-700 text-white px-6 py-4 rounded-lg font-semibold text-lg text-center transition">
+                        class="mt-6 w-full bg-olive-600 hover:bg-olive-700 text-white px-6 py-4 rounded-lg font-semibold text-lg text-center transition">
                     <i class="fas fa-shopping-cart mr-2"></i> Ajouter au panier
                 </button>
             </form>
@@ -151,6 +138,12 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Description placed under images -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+        <h3 class="text-xl font-semibold text-stone-800 mb-2">Description</h3>
+        <p class="text-stone-700">{{ product.description }}</p>
     </div>
 
     {% include 'includes/review_section.html' %}
@@ -201,6 +194,37 @@
 </div>
 
 <script>
+// Mise à jour du variant sélectionné dans le formulaire
+document.querySelectorAll('input[name="variant"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('variant-id-input').value = this.value;
+
+        // Trouver le label associé à la variante sélectionnée
+        const label = this.nextElementSibling; // le label est juste après l'input
+        if (label) {
+            if (label.dataset.price) {
+                document.getElementById('product-price').textContent = label.dataset.price + ' MAD';
+            }
+        }
+    });
+});
+
+// Initialiser le prix au chargement avec la variante cochée par défaut
+window.addEventListener('DOMContentLoaded', () => {
+    const checkedRadio = document.querySelector('input[name="variant"]:checked');
+    if (checkedRadio) {
+        const label = checkedRadio.nextElementSibling;
+        if (label) {
+            if (label.dataset.price) {
+                document.getElementById('product-price').textContent = label.dataset.price + ' MAD';
+            }
+        }
+        document.getElementById('variant-id-input').value = checkedRadio.value;
+    }
+});
+</script>
+
+<script>
 function shareProduct() {
     if (navigator.share) {
         navigator.share({
@@ -214,9 +238,9 @@ function shareProduct() {
     }
 }
 
-// Update variant selection
+// Update variant selection hidden input (already handled above but safe)
 document.querySelectorAll('input[name="variant"]').forEach(radio => {
-    radio.addEventListener('change', function() {
+    radio.addEventListener('change', function () {
         document.getElementById('variant-id-input').value = this.value;
     });
 });

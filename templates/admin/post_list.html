@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Avis Clients - Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-olive-600 mb-8">Avis Clients</h1>
+
+    <!-- Tableau des avis -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-stone-200">
+                <thead class="bg-stone-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Auteur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Contenu</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Produit</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-stone-200">
+                    {% for post in posts %}
+                    <tr class="hover:bg-stone-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">#{{ post.id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    {% if post.author.profile_picture %}
+                                    <img class="h-10 w-10 rounded-full" src="{{ post.author.profile_picture.url }}" alt="">
+                                    {% else %}
+                                    <div class="h-10 w-10 rounded-full bg-stone-200 flex items-center justify-center">
+                                        <i class="fas fa-user text-stone-400"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-stone-900">{{ post.author.username }}</div>
+                                    <div class="text-sm text-stone-500">{{ post.author.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">{{ post.created_at|date:"d/m/Y H:i" }}</td>
+                        <td class="px-6 py-4 text-sm text-stone-500 max-w-xs truncate">{{ post.content }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
+                            {% if post.product %}
+                            <a href="{% url 'product_detail' post.product.id %}" class="text-olive-600 hover:text-olive-800">
+                                {{ post.product.name|truncatechars:20 }}
+                            </a>
+                            {% else %}
+                            <span class="text-stone-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="#" class="text-red-600 hover:text-red-800" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet avis?')">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-stone-500">Aucun avis trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if posts.has_other_pages %}
+        <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-t border-stone-200 sm:px-6">
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-stone-700">
+                        Affichage de <span class="font-medium">{{ posts.start_index }}</span> à <span class="font-medium">{{ posts.end_index }}</span> sur <span class="font-medium">{{ posts.paginator.count }}</span> résultats
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if posts.has_previous %}
+                        <a href="?page={{ posts.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-stone-300 bg-white text-sm font-medium text-stone-500 hover:bg-stone-50">
+                            <span class="sr-only">Précédent</span>
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% endif %}
+
+                        {% for i in posts.paginator.page_range %}
+                            {% if posts.number == i %}
+                            <a href="#" aria-current="page" class="z-10 bg-olive-50 border-olive-500 text-olive-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                {{ i }}
+                            </a>
+                            {% else %}
+                            <a href="?page={{ i }}" class="bg-white border-stone-300 text-stone-500 hover:bg-stone-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                {{ i }}
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if posts.has_next %}
+                        <a href="?page={{ posts.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-stone-300 bg-white text-sm font-medium text-stone-500 hover:bg-stone-50">
+                            <span class="sr-only">Suivant</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

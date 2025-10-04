@@ -1,151 +1,121 @@
 {% extends 'base.html' %}
+{% load math_filters %}
 
 {% block title %}Commande envoyée - AmodGreen{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
     <!-- Message de succès -->
     <div class="text-center mb-12">
         <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <i class="fas fa-check-circle text-4xl text-green-600"></i>
         </div>
-        
-        <h1 class="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
-            ✅ Commande envoyée avec succès !
+        <h1 class="text-3xl md:text-4xl font-bold text-stone-800 mb-4 flex flex-col md:flex-row justify-center items-center gap-4">
+            <span class="text-left">✅ Commande envoyée avec succès !</span>
+            <span class="text-right" dir="rtl">تم إرسال الطلب بنجاح!</span>
         </h1>
-        
-        <p class="text-xl text-stone-600 max-w-2xl mx-auto">
-            Merci <strong>{{ order.full_name }}</strong> ! Votre commande a été reçue. 
-            Nous vous contacterons très bientôt via WhatsApp.
+        <p class="text-xl text-stone-600 max-w-2xl mx-auto flex flex-col md:flex-row justify-center items-center gap-4">
+            <span class="text-left">Merci <strong>{{ order.full_name }}</strong> ! Votre commande a été reçue.</span>
+            <span class="text-right" dir="rtl">لقد تم استلام طلبك وسنتواصل معك قريباً عبر WhatsApp لتأكيد الطلب.</span>
         </p>
     </div>
-    
+
     <!-- Récapitulatif de la commande -->
     <div class="bg-white rounded-lg shadow-md p-8 mb-8">
-        <h2 class="text-2xl font-semibold text-stone-800 mb-6">
-            📋 Récapitulatif de votre commande
+        <h2 class="text-2xl font-semibold text-stone-800 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <span class="text-left">📋 Récapitulatif de votre commande</span>
+            <span class="text-right" dir="rtl">ملخص طلبك</span>
         </h2>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Informations client -->
-            <div>
-                <h3 class="font-semibold text-stone-800 mb-4">
-                    <i class="fas fa-user mr-2 text-olive-600"></i>
-                    Informations client
+            <div class="space-y-2">
+                <h3 class="font-semibold text-stone-800 mb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <span class="text-left"><i class="fas fa-user mr-2 text-olive-600"></i>Informations client</span>
+                    <span class="text-right" dir="rtl">معلومات العميل</span>
                 </h3>
-                <div class="space-y-2 text-stone-600">
-                    <div><strong>Nom :</strong> {{ order.full_name }}</div>
-                    <div><strong>Téléphone :</strong> {{ order.phone }}</div>
-                    <div><strong>Ville :</strong> {{ order.city }}</div>
-                    <div><strong>Adresse :</strong> {{ order.address }}</div>
-                </div>
-            </div>
-            
-            <!-- Détails commande -->
-            <div>
-                <h3 class="font-semibold text-stone-800 mb-4">
-                    <i class="fas fa-shopping-bag mr-2 text-sage-600"></i>
-                    Détails de la commande
-                </h3>
-                <div class="space-y-2 text-stone-600">
-                    <div><strong>Produit :</strong> {{ order.product.name }}</div>
-                    <div><strong>Quantité :</strong> {{ order.quantity }}</div>
-                    <div><strong>Prix unitaire :</strong> {{ order.product.price }} MAD</div>
-                    <div class="text-lg font-bold text-olive-600 pt-2 border-t border-stone-200">
-                        <strong>Total : {{ order.total_price }} MAD</strong>
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-left">Nom : {{ order.full_name }}</span>
+                        <span class="text-right" dir="rtl">الاسم</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-left">Téléphone : {{ order.phone }}</span>
+                        <span class="text-right" dir="rtl">رقم الهاتف</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-left">Ville : {{ order.city }}</span>
+                        <span class="text-right" dir="rtl">المدينة</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-left">Adresse : {{ order.address }}</span>
+                        <span class="text-right" dir="rtl">العنوان</span>
                     </div>
                 </div>
-                
+            </div>
+
+            <!-- Détails commande -->
+            <div class="space-y-2">
+                <h3 class="font-semibold text-stone-800 mb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <span class="text-left"><i class="fas fa-shopping-bag mr-2 text-sage-600"></i>Détails de la commande</span>
+                    <span class="text-right" dir="rtl">تفاصيل الطلب</span>
+                </h3>
+                <div class="space-y-2">
+                    {% for item in order.items.all %}
+                        <div class="flex justify-between items-center border-b border-stone-200 pb-2">
+                            <span class="text-left">Produit : {{ item.variant.product.name }} - {{ item.variant.name }}</span>
+                            <span class="text-right" dir="rtl">المنتج</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-stone-200 pb-2">
+                            <span class="text-left">Quantité : {{ item.quantity }}</span>
+                            <span class="text-right" dir="rtl">الكمية</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-stone-200 pb-2">
+                            <span class="text-left">Prix unitaire : {{ item.price }} MAD</span>
+                            <span class="text-right" dir="rtl">سعر الوحدة</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-stone-200 pb-2">
+                            <span class="text-left">Total ligne : {{ item.quantity|mul:item.price }} MAD</span>
+                            <span class="text-right" dir="rtl">المجموع</span>
+                        </div>
+                    {% endfor %}
+
+                    <div class="flex justify-between items-center text-lg font-bold text-olive-600 pt-4 border-t border-stone-200">
+                        <span class="text-left">Total général : {{ total_general }} MAD</span>
+                        <span class="text-right" dir="rtl">المجموع الكلي</span>
+                    </div>
+                </div>
+
                 {% if order.notes %}
-                    <div class="mt-4">
-                        <strong class="text-stone-800">Remarques :</strong>
-                        <p class="text-stone-600 mt-1">{{ order.notes }}</p>
+                    <div class="flex justify-between items-center mt-4">
+                        <span class="text-left">Remarques : {{ order.notes }}</span>
+                        <span class="text-right" dir="rtl">ملاحظات</span>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
-    
-    <!-- Prochaines étapes -->
-    <div class="bg-olive-50 border border-olive-200 rounded-lg p-6 mb-8">
-        <h3 class="font-semibold text-olive-800 mb-4">
-            <i class="fas fa-clock mr-2"></i>
-            Que se passe-t-il maintenant ?
-        </h3>
-        
-        <div class="space-y-3">
-            <div class="flex items-start">
-                <div class="w-8 h-8 bg-olive-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-1">1</div>
-                <div>
-                    <div class="font-medium text-olive-800">Commande reçue</div>
-                    <div class="text-olive-600 text-sm">Votre commande est enregistrée dans notre système</div>
-                </div>
-            </div>
-            
-            <div class="flex items-start">
-                <div class="w-8 h-8 bg-sage-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-1">2</div>
-                <div>
-                    <div class="font-medium text-stone-800">Contact WhatsApp (dans les 2h)</div>
-                    <div class="text-stone-600 text-sm">Notre équipe vous contactera pour confirmer les détails</div>
-                </div>
-            </div>
-            
-            <div class="flex items-start">
-                <div class="w-8 h-8 bg-stone-400 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-1">3</div>
-                <div>
-                    <div class="font-medium text-stone-800">Préparation et livraison</div>
-                    <div class="text-stone-600 text-sm">Préparation soigneuse et livraison rapide</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Contact WhatsApp direct -->
-    <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-        <h3 class="font-semibold text-green-800 mb-3">
-            <i class="fab fa-whatsapp mr-2"></i>
-            Contact WhatsApp direct
-        </h3>
-        <p class="text-green-700 mb-4">
-            Si vous souhaitez nous contacter immédiatement ou modifier votre commande, cliquez ci-dessous :
-        </p>
-        
-        {% if whatsapp_url %}
-            <a href="{{ whatsapp_url }}" target="_blank" 
-               class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                <i class="fab fa-whatsapp mr-2 text-xl"></i>
-                Ouvrir WhatsApp avec votre commande
-            </a>
-        {% endif %}
-    </div>
-    
-    <!-- Actions -->
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="{% url 'home' %}" 
-           class="bg-olive-600 hover:bg-olive-700 text-white px-8 py-3 rounded-lg font-medium transition-colors text-center">
-            <i class="fas fa-home mr-2"></i>
-            Retour à l'accueil
-        </a>
-        
+
+    <!-- Bouton Retour aux achats -->
+    <div class="text-center mt-8">
         <a href="{% url 'product_list' %}" 
-           class="bg-stone-200 hover:bg-stone-300 text-stone-700 px-8 py-3 rounded-lg font-medium transition-colors text-center">
-            <i class="fas fa-shopping-bag mr-2"></i>
-            Continuer mes achats
-        </a>
-        
-        <a href="{% url 'community' %}" 
-           class="bg-sage-600 hover:bg-sage-700 text-white px-8 py-3 rounded-lg font-medium transition-colors text-center">
-            <i class="fas fa-users mr-2"></i>
-            Rejoindre la communauté
+           class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition flex justify-between items-center">
+            <span class="text-left">🛍️ Retour aux achats</span>
+            <span class="text-right" dir="rtl">العودة للتسوق</span>
         </a>
     </div>
-    
-    <!-- Informations de commande -->
-    <div class="mt-12 text-center text-sm text-stone-500">
-        <p>
-            <strong>Numéro de commande :</strong> #{{ order.id }} | 
-            <strong>Date :</strong> {{ order.created_at|date:"d/m/Y à H:i" }}
-        </p>
+
+    <!-- Contact direct -->
+    <div class="mt-12 text-center flex flex-col md:flex-row justify-between items-center gap-4">
+        <span class="text-left">Pour toute question, contactez-nous directement sur WhatsApp</span>
+        <span class="text-right" dir="rtl">لأي استفسار تواصل معنا عبر واتساب</span>
+        <a href="https://wa.me/212600000000?text=Bonjour, je souhaite passer une commande AmodGreen" target="_blank"
+           class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors gap-2">
+            <i class="fab fa-whatsapp text-xl"></i>
+            <span class="text-left">Contacter sur WhatsApp</span>
+            <span class="text-right" dir="rtl">الاتصال عبر واتساب</span>
+        </a>
     </div>
 </div>
 {% endblock %}

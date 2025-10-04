@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Page introuvable - AmodIgren{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col items-center justify-center bg-stone-50 px-4">
+    <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg text-center">
+        <!-- Illustration -->
+        <div class="mb-6">
+            <img src="{% static 'img/404-illustration.svg' %}" alt="404 Illustration" class="w-64 mx-auto">
+        </div>
+        
+        <!-- Message -->
+        <h1 class="text-3xl font-bold text-olive-600 mb-4">Oups ! Page introuvable</h1>
+        <p class="text-stone-600 mb-6">
+            La page que vous cherchez semble avoir été déplacée, supprimée ou n'existe pas.
+        </p>
+        
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="{% url 'home' %}" 
+               class="px-6 py-3 bg-olive-600 hover:bg-olive-700 text-white rounded-lg transition flex items-center justify-center">
+                <i class="fas fa-home mr-2"></i> Retour à l'accueil
+            </a>
+            <a href="{% url 'product_list' %}" 
+               class="px-6 py-3 border border-stone-300 hover:bg-stone-100 rounded-lg transition flex items-center justify-center">
+                <i class="fas fa-store mr-2"></i> Voir nos produits
+            </a>
+        </div>
+        
+        <!-- Admin specific link -->
+        {% if user.is_staff %}
+        <div class="mt-6 pt-4 border-t border-stone-200">
+            <p class="text-sm text-stone-500 mb-2">Accès administrateur :</p>
+            <a href="{% url 'admin_product_list' %}" class="text-sm text-olive-600 hover:text-olive-700">
+                <i class="fas fa-tachometer-alt mr-1"></i> Retour au dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

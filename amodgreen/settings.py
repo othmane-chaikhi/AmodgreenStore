@@ -8,21 +8,12 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-your-secret-key-change-in-production'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -32,7 +23,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     'crispy_tailwind',
-    'store',
+    'store.apps.StoreConfig',  # Only use the AppConfig version
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -45,6 +37,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'store.middlewares.MediaNotFoundMiddleware',
+    'django.middleware.common.CommonMiddleware',  
 ]
 
 ROOT_URLCONF = 'amodgreen.urls'
@@ -56,6 +50,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'store.context_processors.cart_count',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -64,24 +59,28 @@ TEMPLATES = [
         },
     },
 ]
+# Spécifiez le template pack que vous utilisez
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 WSGI_APPLICATION = 'amodgreen.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'amodgreen_db',     
+        'USER': 'root',             
+        'PASSWORD': 'root',              
+        'HOST': '127.0.0.1',         
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+        }
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -97,17 +96,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
-LANGUAGE_CODE = 'fr'
-
+LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Africa/Casablanca'
-
 USE_I18N = True
-
 USE_TZ = True
+USE_L10N = True
+
+
 
 LANGUAGES = [
     ('fr', 'Français'),
@@ -117,13 +113,16 @@ LANGUAGES = [
 LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
+# Static files
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Create static directory if it doesn't exist
+os.makedirs(BASE_DIR / 'static', exist_ok=True)
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
@@ -131,10 +130,9 @@ STATICFILES_DIRS = [
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+os.makedirs(MEDIA_ROOT, exist_ok=True)
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom User Model
@@ -149,9 +147,12 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-# settings.py
-
+# Admin settings
 ADMIN_WHATSAPP = "+212631889579"
 ADMIN_EMAIL = "admin@example.com"
 ADMIN_ADDRESS = "Rabat, Maroc"
 ADMIN_WHATSAPP_NUMBER = '212631889579'
+
+
+TELEGRAM_BOT_TOKEN = '8297807115:AAGxxGv6rL9bF6h_XW2JsGW2RfdHbmK761U'
+TELEGRAM_CHAT_ID = '1734276901'  

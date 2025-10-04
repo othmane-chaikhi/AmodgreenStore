@@ -1,33 +1,155 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}AmodGreen - Produits Naturels Authentiques du Maroc{% endblock %}
+{% block title %}AMODIGREN - Produits Naturels Authentiques du Maroc{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <section class="gradient-bg text-white py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-            <h1 class="text-4xl md:text-6xl font-bold mb-6">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6">    
                 🌿 Produits Naturels <br>
                 <span class="text-stone-200">Authentiques du Maroc</span>
             </h1>
             <p class="text-xl md:text-2xl mb-8 text-stone-100 max-w-3xl mx-auto">
-                Découvrez les trésors de la nature marocaine : huile d'argan pure, amlou traditionnel, 
+                Découvrez les trésors de la nature marocaine : huile d'argan pure, amlou traditionnel,
                 huiles essentielles et plantes médicinales de qualité premium.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'product_list' %}" class="bg-white text-olive-600 px-8 py-3 rounded-lg font-semibold hover:bg-stone-100 transition-colors">
+                <a href="{% url 'product_list' %}"
+                    class="bg-white text-olive-600 px-8 py-3 rounded-lg font-semibold hover:bg-stone-100 transition-colors">
                     🛍️ Découvrir nos produits
                 </a>
-                <a href="{% url 'order_create' %}" class="bg-stone-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-stone-800 transition-colors">
+                <a href="{% url 'product_list' %}"
+                    class="bg-stone-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-stone-800 transition-colors">
                     📞 Commander maintenant
                 </a>
             </div>
         </div>
     </div>
 </section>
+<!-- Section À propos (intégrée depuis about.html) -->
+<section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold text-stone-800 mb-6">
+                🌿 À propos d'AMODIGREN
+            </h2>
+            <div class="text-center mb-6">
+                <img src="{% static 'img/logo2.png' %}" alt="Logo AmodIGren" class="mx-auto h-24 w-auto">
+            </div>
 
+            <p class="text-xl text-stone-600 max-w-3xl mx-auto">
+                Découvrez l'histoire de notre coopérative marocaine et notre engagement
+                pour les produits naturels authentiques.
+            </p>
+        </div>
+
+        <!-- Notre histoire -->
+        <div class="mb-16">
+            <h3 class="text-3xl font-bold text-stone-800 mb-6">
+                📖 Notre Histoire
+            </h3>
+            <div class="prose max-w-none text-stone-600 leading-relaxed">
+                <p class="text-lg mb-4">
+                    AMODIGREN est née de la passion de producteurs marocains pour les trésors naturels de notre terre.
+                    Fondée en 2020, notre coopérative rassemble des artisans traditionnels et des agriculteurs
+                    biologiques du Maroc, unis par une vision commune : partager l'authenticité de nos produits naturels
+                    avec le monde entier.
+                </p>
+                <!-- ... (reste du contenu de l'histoire) ... -->
+            </div>
+        </div>
+
+        <!-- Nos valeurs (version simplifiée) -->
+        <div class="mb-16">
+            <h3 class="text-3xl font-bold text-stone-800 mb-6 text-center">
+                ✨ Nos Valeurs
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-olive-50 p-6 rounded-lg">
+                    <h4 class="text-xl font-semibold text-olive-800 mb-3">100% Naturel</h4>
+                    <p class="text-olive-700">
+                        Tous nos produits sont issus de l'agriculture biologique, sans additifs chimiques.
+                    </p>
+                </div>
+
+                <div class="bg-sage-50 p-6 rounded-lg">
+                    <h4 class="text-xl font-semibold text-sage-800 mb-3">Commerce Équitable</h4>
+                    <p class="text-sage-700">
+                        Nous garantissons une rémunération juste à nos producteurs.
+                    </p>
+                </div>
+
+                <!-- Ajoutez d'autres valeurs si nécessaire -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Produits en vedette -->
+<section class="py-16 bg-stone-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
+                🌟 Nos Produits Phares
+            </h2>
+            <p class="text-xl text-stone-600 max-w-2xl mx-auto">
+                Une sélection soigneuse de nos meilleurs produits naturels,
+                issus de notre coopérative marocaine.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for product in featured_products %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                {% else %}
+                <div class="w-full h-48 bg-stone-200 flex items-center justify-center">
+                    <i class="fas fa-leaf text-4xl text-stone-400"></i>
+                </div>
+                {% endif %}
+
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-stone-800 mb-2">{{ product.name }}</h3>
+                    <p class="text-stone-600 mb-4 line-clamp-3">{{ product.description|truncatewords:15 }}</p>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-olive-600">{{ product.price }} MAD</span>
+                        <div class="flex gap-2">
+                            <a href="{{ product.get_absolute_url }}"
+                                class="inline-flex items-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-700 px-5 py-2.5 rounded-xl shadow-sm transition duration-200">
+                                Voir
+                            </a>
+
+                            <a href="{% url 'add_to_cart' product.id %}" class="inline-flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-xl shadow-md
+                                hover:bg-green-700 transition-colors duration-300 ease-in-out">
+                                🛒 Ajouter au panier
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-seedling text-6xl text-stone-300 mb-4"></i>
+                <p class="text-xl text-stone-500">Aucun produit disponible pour le moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-12">
+            <a href="{% url 'product_list' %}"
+                class="bg-olive-600 hover:bg-olive-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                Voir tous nos produits →
+            </a>
+        </div>
+    </div>
+</section>
 <!-- Statistiques -->
 <section class="py-16 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,65 +169,6 @@
         </div>
     </div>
 </section>
-
-<!-- Produits en vedette -->
-<section class="py-16 bg-stone-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
-                🌟 Nos Produits Phares
-            </h2>
-            <p class="text-xl text-stone-600 max-w-2xl mx-auto">
-                Une sélection soigneuse de nos meilleurs produits naturels, 
-                issus de notre coopérative marocaine.
-            </p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for product in featured_products %}
-                <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                    {% if product.image %}
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
-                    {% else %}
-                        <div class="w-full h-48 bg-stone-200 flex items-center justify-center">
-                            <i class="fas fa-leaf text-4xl text-stone-400"></i>
-                        </div>
-                    {% endif %}
-                    
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-stone-800 mb-2">{{ product.name }}</h3>
-                        <p class="text-stone-600 mb-4 line-clamp-3">{{ product.description|truncatewords:15 }}</p>
-                        
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl font-bold text-olive-600">{{ product.price }} MAD</span>
-                            <div class="flex gap-2">
-                                <a href="{{ product.get_absolute_url }}" class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-4 py-2 rounded transition-colors">
-                                    Voir
-                                </a>
-                                <a href="{% url 'add_to_cart' product.id %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-    ➕ Ajouter au panier
-</a>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% empty %}
-                <div class="col-span-full text-center py-12">
-                    <i class="fas fa-seedling text-6xl text-stone-300 mb-4"></i>
-                    <p class="text-xl text-stone-500">Aucun produit disponible pour le moment.</p>
-                </div>
-            {% endfor %}
-        </div>
-        
-        <div class="text-center mt-12">
-            <a href="{% url 'product_list' %}" class="bg-olive-600 hover:bg-olive-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-                Voir tous nos produits →
-            </a>
-        </div>
-    </div>
-</section>
-
 <!-- Derniers avis -->
 {% if latest_reviews %}
 <section class="py-16 bg-white">
@@ -118,55 +181,54 @@
                 Découvrez les témoignages authentiques de notre communauté.
             </p>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {% for review in latest_reviews %}
-                <div class="bg-stone-50 rounded-lg p-6 card-hover">
-                    <div class="flex items-center mb-4">
-                        <div class="w-10 h-10 bg-olive-600 rounded-full flex items-center justify-center text-white font-semibold">
-                            {{ review.author.first_name.0|default:review.author.username.0 }}
+            <div class="bg-stone-50 rounded-lg p-6 card-hover">
+                <div class="flex items-center mb-4">
+                    <div
+                        class="w-10 h-10 bg-olive-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        {{ review.author.first_name.0|default:review.author.username.0 }}
+                    </div>
+                    <div class="ml-3">
+                        <div class="font-semibold text-stone-800">
+                            {{ review.author.first_name|default:review.author.username }}
                         </div>
-                        <div class="ml-3">
-                            <div class="font-semibold text-stone-800">
-                                {{ review.author.first_name|default:review.author.username }}
-                            </div>
-                            <div class="text-sm text-stone-500">
-                                {{ review.created_at|date:"d M Y" }}
-                            </div>
+                        <div class="text-sm text-stone-500">
+                            {{ review.created_at|date:"d M Y" }}
                         </div>
                     </div>
-                    
-                    <h4 class="font-semibold text-stone-800 mb-2">{{ review.title }}</h4>
-                    <p class="text-stone-600 mb-3">{{ review.content|truncatewords:20 }}</p>
-                    
-                    {% if review.product %}
-                        <div class="text-sm text-olive-600">
-                            <i class="fas fa-leaf mr-1"></i>
-                            À propos de : {{ review.product.name }}
-                        </div>
-                    {% endif %}
                 </div>
+
+                <h4 class="font-semibold text-stone-800 mb-2">{{ review.title }}</h4>
+                <p class="text-stone-600 mb-3">{{ review.content|truncatewords:20 }}</p>
+
+                {% if review.product %}
+                <div class="text-sm text-olive-600">
+                    <i class="fas fa-leaf mr-1"></i>
+                    À propos de : {{ review.product.name }}
+                </div>
+                {% endif %}
+            </div>
             {% endfor %}
-        </div>
-        
-        <div class="text-center mt-12">
-            <a href="{% url 'community' %}" class="bg-sage-600 hover:bg-sage-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-                Rejoindre la communauté →
-            </a>
         </div>
     </div>
 </section>
 {% endif %}
 
-<!-- Pourquoi choisir AmodGreen -->
+<!-- Pourquoi choisir AMODIGREN -->
 <section class="py-16 bg-stone-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
+            <div class="text-center mb-6">
+                <img src="{% static 'img/logo2.png' %}" alt="Pourquoi AmodIGren" class="mx-auto h-24 w-auto">
+            </div>
+
             <h2 class="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
-                ✨ Pourquoi Choisir AmodGreen ?
+                ✨ Pourquoi Choisir AMODI GREN ?
             </h2>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="text-center">
                 <div class="w-16 h-16 bg-olive-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -177,17 +239,17 @@
                     Tous nos produits sont issus de l'agriculture biologique et du commerce équitable.
                 </p>
             </div>
-            
+
             <div class="text-center">
                 <div class="w-16 h-16 bg-sage-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-users text-2xl text-white"></i>
                 </div>
                 <h3 class="text-xl font-semibold text-stone-800 mb-2">Coopérative Solidaire</h3>
                 <p class="text-stone-600">
-                    En soutenant AmodGreen, vous soutenez directement les producteurs locaux marocains.
+                    En soutenant AMODIGREN, vous soutenez directement les producteurs locaux marocains.
                 </p>
             </div>
-            
+
             <div class="text-center">
                 <div class="w-16 h-16 bg-olive-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-shipping-fast text-2xl text-white"></i>
@@ -210,7 +272,8 @@
         <p class="text-xl mb-8 text-stone-100">
             Commandez dès maintenant et recevez vos produits naturels authentiques directement chez vous.
         </p>
-        <a href="{% url 'order_create' %}" class="bg-white text-olive-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-stone-100 transition-colors inline-block">
+        <a href="{% url 'product_list' %}"
+            class="bg-white text-olive-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-stone-100 transition-colors inline-block">
             🛒 Commander maintenant
         </a>
     </div>

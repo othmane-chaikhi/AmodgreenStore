@@ -1,11 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h1>Confirmer la suppression</h1>
-  <p>Voulez-vous vraiment supprimer le produit "{{ product.name }}" ?</p>
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Supprimer</button>
-    <a href="{% url 'admin_dashboard' %}">Annuler</a>
-  </form>
+<div class="max-w-xl mx-auto mt-20 p-6 bg-white rounded-lg shadow-md">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">Confirmer la suppression</h1>
+    <p class="mb-6 text-gray-700">
+        Voulez-vous vraiment supprimer le produit "<span class="font-semibold">{{ product.name }}</span>" ?
+    </p>
+    <form method="post" class="flex gap-4">
+        {% csrf_token %}
+        <button type="submit"
+            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors">
+            Supprimer
+        </button>
+        <a href="{% url 'admin_dashboard' %}"
+           class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition-colors">
+           Annuler
+        </a>
+    </form>
+</div>
 {% endblock %}

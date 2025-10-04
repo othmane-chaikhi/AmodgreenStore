@@ -2,12 +2,28 @@
 {% block title %}Ajouter une Catégorie{% endblock %}
 
 {% block content %}
-<div class="max-w-xl mx-auto py-8 px-4 bg-white shadow rounded">
-    <h2 class="text-2xl font-bold mb-4">Ajouter une catégorie</h2>
-    <form method="post">
+<div class="max-w-xl mx-auto py-8 px-6 bg-white shadow-lg rounded-lg">
+    <h2 class="text-3xl font-extrabold mb-6 text-olive-700">(Ajouter/Modifier) une catégorie</h2>
+    <form method="post" class="space-y-6">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        
+        {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-stone-700 mb-1">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                <p class="text-xs text-stone-400 mt-1">{{ field.help_text }}</p>
+                {% endif %}
+                {% for error in field.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        
+        <button type="submit"
+                class="w-full bg-olive-600 hover:bg-olive-700 text-white font-semibold py-3 rounded-lg transition">
             💾 Enregistrer
         </button>
     </form>

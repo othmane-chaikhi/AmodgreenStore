@@ -91,7 +91,7 @@
                 <!-- Contenu produit -->
                 <div class="p-4">
                     <h3 class="text-lg font-semibold text-stone-800 mb-2 line-clamp-1">
-                        {{ product.name }}
+                        {{ product.name_ar }}
                     </h3>
 
                     <p class="text-stone-600 text-sm mb-3 line-clamp-2">
@@ -110,7 +110,7 @@
                                 <i class="fas fa-eye mr-1"></i>Voir
                             </a>
                              <a href="{% url 'add_to_cart' product.id %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-    ➕ Ajouter au panier
+     <span class="text-left">Ajouter au panier</span> <span class="text-right" dir="rtl">أضف للسلة</span>
 </a>
                         </div>
                     </div>

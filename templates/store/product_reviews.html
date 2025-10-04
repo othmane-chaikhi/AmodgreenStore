@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Avis sur {{ product.name }} - AmodGreen{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+        <div class="flex items-center space-x-3">
+            <a href="{{ product.get_absolute_url }}" class="text-olive-600 hover:text-olive-700 flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Retour au produit
+            </a>
+            <h1 class="text-2xl font-bold text-stone-800">
+                Avis - {{ product.name }}
+            </h1>
+        </div>
+
+        <!-- Rating Summary -->
+        {% if product.average_rating %}
+        <div class="mt-4 sm:mt-0 bg-white rounded-lg shadow-sm px-4 py-2 flex items-center space-x-3">
+            {% include "includes/star_rating.html" with rating=product.average_rating %}
+            <span class="text-stone-600 text-sm">
+                {{ product.average_rating|floatformat:1 }}/5 ({{ product.review_count }} avis)
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Reviews List -->
+    <div class="space-y-6">
+        {% for review in page_obj %}
+        <div class="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition">
+            <div class="flex items-start mb-4">
+                <!-- Avatar -->
+                <div class="w-12 h-12 bg-olive-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                    {{ review.author.first_name|default:review.author.username|first|upper }}
+                </div>
+                
+                <!-- Review Info -->
+                <div class="ml-4 flex-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-stone-800">
+                                {{ review.author.first_name|default:review.author.username }}
+                            </p>
+                            <p class="text-xs text-stone-500">
+                                {{ review.created_at|date:"d M Y" }}
+                            </p>
+                        </div>
+                        {% include "includes/star_rating.html" with rating=review.rating %}
+                    </div>
+
+                    {% if review.title %}
+                    <h4 class="font-semibold text-stone-800 mt-2">{{ review.title }}</h4>
+                    {% endif %}
+
+                    <p class="text-stone-600 mt-1">{{ review.content }}</p>
+
+                    <!-- Image review if exists -->
+                    {% if review.image %}
+      <img src="{{ review.image.url }}" alt="Photo de {{ review.author.username }}" class="max-w-xs rounded mt-2" />
+    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-stone-500 py-8">Aucun avis pour ce produit pour l’instant.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex justify-center space-x-1">
+        {% if page_obj.has_previous %}
+            <a href="?page=1" class="px-3 py-1 border rounded-l-lg hover:bg-olive-50">«</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border hover:bg-olive-50">‹</a>
+        {% endif %}
+
+        <span class="px-3 py-1 bg-olive-600 text-white">
+            Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border hover:bg-olive-50">›</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border rounded-r-lg hover:bg-olive-50">»</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

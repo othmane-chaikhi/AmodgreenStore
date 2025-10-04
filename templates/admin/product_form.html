@@ -1,17 +1,378 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
-{% block title %}{{ title|default:"Formulaire produit" }}{% endblock %}
+{% block title %}Modifier {{ product.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto py-6">
-    <h1 class="text-2xl font-bold mb-4">{{ title|default:"Formulaire produit" }}</h1>
-    <form method="post" enctype="multipart/form-data" class="space-y-6 bg-white p-6 rounded shadow">
+<div class="max-w-6xl mx-auto py-8 px-4">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-olive-600">Modifier "{{ product.name }}"</h1>
+        <a href="{% url 'admin_dashboard' %}" class="text-stone-600 hover:text-olive-600">
+            <i class="fas fa-arrow-left mr-1"></i> Retour au dashboard
+        </a>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" class="space-y-8 bg-white p-8 rounded-xl shadow-lg border border-stone-100">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="bg-olive-600 hover:bg-olive-700 text-white px-4 py-2 rounded">
-            Enregistrer
-        </button>
-        <a href="{% url 'admin_dashboard' %}" class="ml-4 text-gray-600 hover:underline">Annuler</a>
+        {{ form.non_field_errors }}
+        
+        <!-- Section Informations de base -->
+        <div class="space-y-6">
+            <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Informations de base</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    {{ form.name|as_crispy_field }}
+                    {{ form.name_ar|as_crispy_field }}
+                    {{ form.category|as_crispy_field }}
+                </div>
+                <div class="space-y-4">
+                    {{ form.price|as_crispy_field }}
+                    {{ form.is_available|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Description -->
+        <div class="space-y-6">
+            <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Description</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    {{ form.description|as_crispy_field }}
+                </div>
+                <div class="space-y-4">
+                    {{ form.description_ar|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Ingrédients -->
+        <div class="space-y-6">
+            <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Ingrédients</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    {{ form.ingredients|as_crispy_field }}
+                </div>
+                <div class="space-y-4">
+                    {{ form.ingredients_ar|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Images -->
+        <div class="space-y-6">
+            <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Images</h2>
+            
+            <!-- Image principale -->
+            <div class="space-y-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        {{ form.image|as_crispy_field }}
+                    </div>
+                    {% if product.image %}
+                    <div class="relative w-24 h-24 rounded-lg overflow-hidden border border-stone-200 group">
+                        <img src="{{ product.image.url }}" alt="Image actuelle" class="w-full h-full object-cover">
+                        <button type="button" 
+                                class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                                onclick="deleteImage('main', '{{ product.pk }}')">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-stone-500 mt-1">Image principale du produit (recommandé: 800x800px)</p>
+            </div>
+            
+            <!-- Images supplémentaires -->
+            <div class="space-y-4">
+                <label class="block text-sm font-medium text-stone-700">Ajouter des images supplémentaires</label>
+                <div class="flex items-center space-x-4">
+                    <label for="additional-images" class="cursor-pointer">
+                        <div class="flex flex-col items-center justify-center w-40 h-32 border-2 border-dashed border-stone-300 rounded-lg bg-stone-50 hover:bg-stone-100 transition">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-stone-400 mb-2"></i>
+                            <span class="text-sm text-stone-500">Glisser-déposer ou</span>
+                            <span class="text-sm font-medium text-olive-600">Parcourir</span>
+                        </div>
+                        <input id="additional-images" type="file" name="images" multiple class="hidden" accept="image/*">
+                    </label>
+                    <div id="new-images-preview" class="flex flex-wrap gap-3"></div>
+                </div>
+                <p class="text-xs text-stone-500">Formats supportés: JPG, PNG, WEBP. Max 5MB par image.</p>
+            </div>
+            
+            <!-- Images existantes -->
+            <div class="space-y-4">
+                <h3 class="text-lg font-medium text-stone-700">Images existantes</h3>
+                <div id="existing-images" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {% for img in images %}
+                    <div class="relative group" id="image-{{ img.id }}">
+                        <img src="{{ img.image.url }}" alt="Image supplémentaire" class="w-full h-40 object-cover rounded-lg border border-stone-200">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition"></div>
+                        <button type="button" 
+                                class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                                onclick="deleteImage('{{ img.id }}', '{{ product.pk }}')">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    </div>
+                    {% empty %}
+                    <p class="text-stone-500 col-span-full">Aucune image supplémentaire</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Variantes -->
+        <div class="space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Variantes du produit</h2>
+                <button type="button" id="add-variant-btn" class="flex items-center text-sm bg-olive-600 hover:bg-olive-700 text-white px-3 py-1.5 rounded-lg transition">
+                    <i class="fas fa-plus mr-1.5"></i> Ajouter une variante
+                </button>
+            </div>
+            
+            {% if variant_formset.non_form_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">
+                            {% for error in variant_formset.non_form_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {{ variant_formset.management_form }}
+            <div class="overflow-x-auto rounded-lg border border-stone-200">
+                <table class="min-w-full divide-y divide-stone-200">
+                    <thead class="bg-stone-50">
+                        <tr>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-stone-500 uppercase tracking-wider">Défaut</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Nom</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Prix (MAD)</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-stone-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="variant-forms-container" class="bg-white divide-y divide-stone-200">
+                        {% for form_variant in variant_formset %}
+                        <tr class="variant-form-row hover:bg-stone-50 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <input type="radio" name="default_variant" value="{{ forloop.counter0 }}" 
+                                       class="h-4 w-4 text-olive-600 border-stone-300 focus:ring-olive-500"
+                                       {% if form_variant.instance.is_default or forloop.first and not product.default_variant %}checked{% endif %}>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{ form_variant.id }}
+                                {{ form_variant.name|as_crispy_field }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{ form_variant.price|as_crispy_field }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                {% if form_variant.instance.pk %}
+                                    {{ form_variant.DELETE|as_crispy_field }}
+                                {% endif %}
+                                <button type="button" class="remove-variant-btn ml-2 text-red-500 hover:text-red-700" aria-label="Supprimer la variante">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Boutons de soumission -->
+        <div class="flex justify-end space-x-4 pt-6 border-t border-stone-200">
+            <a href="{% url 'admin_dashboard' %}" class="px-6 py-2.5 border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-100 transition">
+                Annuler
+            </a>
+            <button type="submit" class="px-6 py-2.5 bg-olive-600 hover:bg-olive-700 text-white rounded-lg shadow-sm transition flex items-center">
+                <i class="fas fa-save mr-2"></i> Mettre à jour
+            </button>
+        </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = "{{ csrf_token }}";
+    const productId = "{{ product.pk|default:'' }}";
+    const variantFormPrefix = "{{ variant_formset.prefix }}";
+    let formCount = parseInt("{{ variant_formset.total_form_count }}", 10);
+    const totalFormsInput = document.getElementById(`id_${variantFormPrefix}-TOTAL_FORMS`);
+    const variantFormsContainer = document.getElementById('variant-forms-container');
+
+    // Aperçu des nouvelles images
+    const imageInput = document.getElementById('additional-images');
+    const newImagesPreview = document.getElementById('new-images-preview');
+    
+    if (imageInput) {
+        imageInput.addEventListener('change', () => {
+            newImagesPreview.innerHTML = '';
+            Array.from(imageInput.files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const div = document.createElement('div');
+                    div.className = 'relative w-24 h-24 rounded-lg overflow-hidden border border-stone-200';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition"></div>
+                        <span class="absolute top-1 right-1 bg-white rounded-full p-1 opacity-0 hover:opacity-100 transition-opacity">
+                            <i class="fas fa-times text-xs text-red-500"></i>
+                        </span>
+                    `;
+                    newImagesPreview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    }
+
+    // Ajouter une variante
+    document.getElementById('add-variant-btn').addEventListener('click', () => {
+        const newFormHtml = `
+            <tr class="variant-form-row hover:bg-stone-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <input type="radio" name="default_variant" value="${formCount}" 
+                           class="h-4 w-4 text-olive-600 border-stone-300 focus:ring-olive-500">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="hidden" name="${variantFormPrefix}-${formCount}-id" id="id_${variantFormPrefix}-${formCount}-id">
+                    <input type="text" name="${variantFormPrefix}-${formCount}-name" 
+                           id="id_${variantFormPrefix}-${formCount}-name" required
+                           class="w-full rounded-md border-stone-300 shadow-sm focus:border-olive-500 focus:ring-olive-500">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="number" name="${variantFormPrefix}-${formCount}-price" 
+                           step="0.01" id="id_${variantFormPrefix}-${formCount}-price" required
+                           class="w-full rounded-md border-stone-300 shadow-sm focus:border-olive-500 focus:ring-olive-500">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <button type="button" class="remove-variant-btn text-red-500 hover:text-red-700" aria-label="Supprimer la variante">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        variantFormsContainer.insertAdjacentHTML('beforeend', newFormHtml);
+        formCount++;
+        totalFormsInput.value = formCount;
+    });
+
+    // Supprimer une variante
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.remove-variant-btn')) return;
+        const row = e.target.closest('.variant-form-row');
+        if (!row) return;
+
+        if (!confirm("Êtes-vous sûr de vouloir supprimer cette variante ?")) return;
+
+        const deleteCheckbox = row.querySelector(`input[type="checkbox"][name$="-DELETE"]`);
+        const radioInput = row.querySelector('input[type="radio"]');
+
+        if (deleteCheckbox) {
+            // Variante existante: marquer pour suppression
+            deleteCheckbox.checked = true;
+            row.style.opacity = '0.5';
+            row.style.pointerEvents = 'none';
+            
+            if (radioInput.checked) {
+                radioInput.checked = false;
+                showToast("La variante par défaut a été supprimée. Veuillez choisir une autre variante par défaut.", 'warning');
+            }
+        } else {
+            // Nouvelle variante: supprimer directement
+            if (radioInput.checked) {
+                radioInput.checked = false;
+                showToast("La variante par défaut a été supprimée. Veuillez choisir une autre variante par défaut.", 'warning');
+            }
+            row.remove();
+            formCount = document.querySelectorAll('.variant-form-row').length;
+            totalFormsInput.value = formCount;
+            
+            // Réindexer les noms/ID des inputs
+            const rows = variantFormsContainer.querySelectorAll('.variant-form-row');
+            rows.forEach((r, idx) => {
+                r.querySelectorAll('input').forEach(input => {
+                    if (input.name) {
+                        input.name = input.name.replace(new RegExp(`${variantFormPrefix}-\\d+`), `${variantFormPrefix}-${idx}`);
+                    }
+                    if (input.id) {
+                        input.id = input.id.replace(new RegExp(`${variantFormPrefix}-\\d+`), `${variantFormPrefix}-${idx}`);
+                    }
+                });
+                const radio = r.querySelector('input[type="radio"]');
+                if (radio) radio.value = idx;
+            });
+        }
+    });
+
+    // Validation avant soumission
+    document.querySelector('form').addEventListener('submit', e => {
+        const radios = document.querySelectorAll('input[name="default_variant"]');
+        if (![...radios].some(r => r.checked)) {
+            e.preventDefault();
+            showToast("Veuillez sélectionner une variante par défaut.", 'error');
+            return;
+        }
+    });
+
+    // Fonction pour supprimer une image
+    window.deleteImage = async function(imgId, productId) {
+        if (!confirm("Êtes-vous sûr de vouloir supprimer cette image ?")) return;
+
+        try {
+            const response = await fetch(`/fr/product/${productId}/delete-image/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    id: imgId, 
+                    type: imgId === 'main' ? 'main' : 'extra' 
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById(`image-${imgId}`)?.remove();
+                showToast("Image supprimée avec succès", 'success');
+            } else {
+                showToast(data.error || "Erreur lors de la suppression", 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast("Erreur réseau lors de la suppression", 'error');
+        }
+    };
+
+    // Fonction pour afficher des notifications
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white ${
+            type === 'success' ? 'bg-green-500' : 
+            type === 'error' ? 'bg-red-500' : 
+            'bg-yellow-500'
+        }`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    }
+});
+</script>
 {% endblock %}

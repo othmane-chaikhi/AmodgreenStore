@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Produits{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <h1 class="text-3xl font-bold text-olive-600">Gestion des Produits</h1>
+        <a href="{% url 'product_create' %}" 
+           class="flex items-center bg-olive-600 hover:bg-olive-700 text-white px-4 py-2 rounded-lg transition">
+            <i class="fas fa-plus mr-2"></i> Ajouter un produit
+        </a>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Champ de recherche -->
+            <div>
+                <label for="search" class="block text-sm font-medium text-stone-700 mb-1">Recherche</label>
+                <input type="text" name="q" id="search" value="{{ search_query }}" 
+                       class="w-full rounded-md border-stone-300 shadow-sm focus:border-olive-500 focus:ring-olive-500" 
+                       placeholder="Nom, description...">
+            </div>
+            
+            <!-- Filtre par catégorie -->
+            <div>
+                <label for="category" class="block text-sm font-medium text-stone-700 mb-1">Catégorie</label>
+                <select name="category" id="category" class="w-full rounded-md border-stone-300 shadow-sm focus:border-olive-500 focus:ring-olive-500">
+                    <option value="">Toutes les catégories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Filtre par disponibilité -->
+            <div>
+                <label for="availability" class="block text-sm font-medium text-stone-700 mb-1">Disponibilité</label>
+                <select name="availability" id="availability" class="w-full rounded-md border-stone-300 shadow-sm focus:border-olive-500 focus:ring-olive-500">
+                    <option value="">Tous</option>
+                    <option value="available" {% if availability_filter == 'available' %}selected{% endif %}>Disponible</option>
+                    <option value="unavailable" {% if availability_filter == 'unavailable' %}selected{% endif %}>Non disponible</option>
+                </select>
+            </div>
+            
+            <!-- Boutons -->
+            <div class="flex items-end gap-2">
+                <button type="submit" class="h-10 px-4 bg-olive-600 hover:bg-olive-700 text-white rounded-md transition">
+                    <i class="fas fa-filter mr-1"></i> Filtrer
+                </button>
+                <a href="{% url 'admin_product_list' %}" class="h-10 px-4 flex items-center border border-stone-300 hover:bg-stone-100 rounded-md transition">
+                    <i class="fas fa-sync-alt mr-1"></i> Réinitialiser
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tableau des produits -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-stone-200">
+                <thead class="bg-stone-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Image</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Nom</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Catégorie</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Prix</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Variantes</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Statut</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-stone-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-stone-200">
+                    {% for product in products %}
+                    <tr class="hover:bg-stone-50 transition">
+                        <!-- Image -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="w-12 h-12 rounded-md overflow-hidden border border-stone-200">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full bg-stone-100 flex items-center justify-center">
+                                    <i class="fas fa-image text-stone-400"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        
+                        <!-- Nom -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="font-medium text-stone-900">{{ product.name }}</div>
+                            <div class="text-xs text-stone-500 truncate max-w-xs">{{ product.description|truncatechars:50 }}</div>
+                        </td>
+                        
+                        <!-- Catégorie -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if product.category %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-stone-100 text-stone-800">
+                                {{ product.category.name }}
+                            </span>
+                            {% else %}
+                            <span class="text-stone-400">-</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Prix -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="font-medium">{{ product.price }} MAD</span>
+                            {% if product.variants.exists %}
+                            <div class="text-xs text-stone-500">+ {{ product.variants.count }} variantes</div>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Variantes -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if product.variants.exists %}
+                            <div class="flex flex-wrap gap-1 max-w-xs">
+                                {% for variant in product.variants.all|slice:":3" %}
+                                <span class="text-xs px-2 py-1 bg-stone-100 rounded-full">
+                                    {{ variant.name }} ({{ variant.price }} MAD)
+                                </span>
+                                {% endfor %}
+                                {% if product.variants.count > 3 %}
+                                <span class="text-xs px-2 py-1 bg-stone-100 rounded-full">
+                                    +{{ product.variants.count|add:"-3" }} autres
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="text-stone-400">-</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Statut -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if product.is_available %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i> Disponible
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+                                <i class="fas fa-times-circle mr-1"></i> Non disponible
+                            </span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end space-x-2">
+                                <a href="{% url 'product_update' product.pk %}" 
+                                   class="text-olive-600 hover:text-olive-800 p-1 rounded-full hover:bg-olive-50 transition"
+                                   title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'product_detail' product.pk %}" 
+                                   class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50 transition"
+                                   title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <form method="post" action="{% url 'product_delete' product.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="button" onclick="confirmDelete(this)" 
+                                            class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition"
+                                            title="Supprimer">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-stone-500">
+                            Aucun produit trouvé
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-t border-stone-200">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if products.has_previous %}
+                <a href="?page={{ products.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                   class="relative inline-flex items-center px-4 py-2 border border-stone-300 text-sm font-medium rounded-md text-stone-700 bg-white hover:bg-stone-50">
+                    Précédent
+                </a>
+                {% endif %}
+                {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                   class="relative inline-flex items-center px-4 py-2 border border-stone-300 text-sm font-medium rounded-md text-stone-700 bg-white hover:bg-stone-50">
+                    Suivant
+                </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-stone-700">
+                        Affichage de <span class="font-medium">{{ products.start_index }}</span> à <span class="font-medium">{{ products.end_index }}</span> sur <span class="font-medium">{{ products.paginator.count }}</span> résultats
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if products.has_previous %}
+                        <a href="?page={{ products.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-stone-300 bg-white text-sm font-medium text-stone-500 hover:bg-stone-50">
+                            <span class="sr-only">Précédent</span>
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% endif %}
+                        
+                        {% for i in products.paginator.page_range %}
+                            {% if products.number == i %}
+                            <a href="#" aria-current="page" class="z-10 bg-olive-50 border-olive-500 text-olive-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                {{ i }}
+                            </a>
+                            {% else %}
+                            <a href="?page={{ i }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                               class="bg-white border-stone-300 text-stone-500 hover:bg-stone-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                {{ i }}
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if products.has_next %}
+                        <a href="?page={{ products.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if availability_filter %}&availability={{ availability_filter }}{% endif %}" 
+                           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-stone-300 bg-white text-sm font-medium text-stone-500 hover:bg-stone-50">
+                            <span class="sr-only">Suivant</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function confirmDelete(button) {
+    if (confirm("Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.")) {
+        button.closest('form').submit();
+    }
+}
+</script>
+{% endblock %}

@@ -1,215 +1,346 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 {% load static %}
+{% load math_filters %}
 
 {% block title %}{{ product.name }} - AmodGreen{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
     <!-- Breadcrumb -->
-    <nav class="mb-8 text-sm">
-        <ol class="flex items-center space-x-2 text-stone-500">
-            <li><a href="{% url 'home' %}" class="hover:text-olive-600">Accueil</a></li>
+    <nav class="mb-8 text-sm text-stone-500" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2">
+            <li class="flex gap-1"><span class="text-left">Accueil</span><span class="text-right" dir="rtl">الرئيسية</span></li>
             <li><i class="fas fa-chevron-right text-xs"></i></li>
-            <li><a href="{% url 'product_list' %}" class="hover:text-olive-600">Produits</a></li>
+            <li class="flex gap-1"><span class="text-left">Produits</span><span class="text-right" dir="rtl">المنتجات</span></li>
             <li><i class="fas fa-chevron-right text-xs"></i></li>
-            <li class="text-stone-800 font-medium">{{ product.name }}</li>
+            <li class="font-medium flex gap-1">
+                <span class="text-left">{{ product.name }}</span>
+                <span class="text-right" dir="rtl">{{ product.name_ar }}</span>
+            </li>
         </ol>
     </nav>
 
-    <!-- Détail produit -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-        <!-- Image produit -->
-        <div class="space-y-4">
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <!-- Product Images -->
+        <div 
+            x-data="{ activeImage: '{{ product.image.url|default_if_none:product.additional_images.first.image.url }}' }" 
+            class="space-y-6"
+        >
+            <div class="bg-white rounded-xl overflow-hidden shadow">
                 {% if product.image %}
-                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-96 object-cover">
+                    <img :src="activeImage" alt="{{ product.name }}" class="w-full h-96 object-contain" />
                 {% else %}
-                <div class="w-full h-96 bg-stone-200 flex items-center justify-center">
-                    <i class="fas fa-leaf text-6xl text-stone-400"></i>
-                </div>
+                    <div class="w-full h-96 flex items-center justify-center bg-stone-100 text-stone-400">
+                        <i class="fas fa-image text-5xl"></i>
+                    </div>
                 {% endif %}
             </div>
 
-            <!-- Badge catégorie -->
-            <div class="flex justify-center">
-                <span class="bg-olive-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                    <i class="fas fa-tag mr-2"></i>{{ product.category.name }}
+            <div class="flex gap-3 overflow-x-auto" role="list">
+                {% if product.image %}
+                <img 
+                    @click="activeImage = '{{ product.image.url }}'" 
+                    src="{{ product.image.url }}" 
+                    alt="Image principale"
+                    class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
+                    :class="activeImage === '{{ product.image.url }}' ? 'border-olive-600' : 'border-gray-300'"
+                    role="listitem">
+                {% endif %}
+
+                {% for img in product.additional_images.all %}
+                <img 
+                    @click="activeImage = '{{ img.image.url }}'" 
+                    src="{{ img.image.url }}" 
+                    alt="Image supplémentaire"
+                    class="w-24 h-24 rounded-lg object-cover cursor-pointer border-2"
+                    :class="activeImage === '{{ img.image.url }}' ? 'border-olive-600' : 'border-gray-300'"
+                    role="listitem">
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="space-y-6">
+            <!-- Category -->
+            <div>
+                <span class="inline-block bg-olive-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                    <i class="fas fa-tag mr-1"></i>
+                    <span class="text-left">{{ product.category.name }}</span>
+                    <span class="text-right" dir="rtl">{{ product.category.name_ar }}</span>
                 </span>
             </div>
-        </div>
 
-        <!-- Informations produit -->
-        <div class="space-y-6">
+            <!-- Title & Price -->
             <div>
-                <h1 class="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
-                    {{ product.name }}
+                <h1 class="text-3xl md:text-4xl font-bold text-stone-800 flex justify-between items-center">
+                    <span class="text-left">{{ product.name }}</span>
+                    <span class="text-right" dir="rtl">{{ product.name_ar }}</span>
                 </h1>
-
-                <div class="text-4xl font-bold text-olive-600 mb-6">
-                    {{ product.price }} MAD
-                </div>
+                <p id="product-price" class="text-4xl text-olive-600 font-bold mt-4">
+                    {{ variants.first.price }} MAD
+                </p>
             </div>
 
-            <!-- Description -->
-            <div class="prose max-w-none">
-                <h3 class="text-xl font-semibold text-stone-800 mb-3">Description</h3>
-                <p class="text-stone-600 leading-relaxed">{{ product.description }}</p>
-            </div>
-
-            <!-- Ingrédients -->
+            <!-- Ingredients -->
             {% if product.ingredients %}
-            <div class="prose max-w-none">
-                <h3 class="text-xl font-semibold text-stone-800 mb-3">
-                    <i class="fas fa-leaf mr-2 text-olive-600"></i>Ingrédients
+            <section>
+                <h3 class="text-xl font-semibold text-stone-800 mb-2 flex justify-between">
+                    <span class="text-left"><i class="fas fa-leaf mr-2 text-olive-600"></i>Ingrédients</span>
+                    <span class="text-right" dir="rtl">المكونات</span>
                 </h3>
-                <p class="text-stone-600 leading-relaxed">{{ product.ingredients }}</p>
-            </div>
+                <p class="text-stone-700">{{ product.ingredients }}</p>
+            </section>
             {% endif %}
 
-            <!-- Actions -->
-            <div class="space-y-4 pt-6 border-t border-stone-200">
-                <a href="{% url 'add_to_cart' product.id %}"
-                    class="w-full bg-olive-600 hover:bg-olive-700 text-white text-center px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center">
-                    <i class="fas fa-shopping-cart mr-3"></i>
-                    Ajouter au panier
-                </a>
-            
-                <div class="grid grid-cols-2 gap-4">
-                    <a href="{% url 'product_list' %}"
-                        class="bg-stone-200 hover:bg-stone-300 text-stone-700 text-center px-6 py-3 rounded-lg font-medium transition-colors">
-                        <i class="fas fa-arrow-left mr-2"></i>Retour
-                    </a>
+            <!-- Variants -->
+            {% if variants.exists %}
+            <section class="options-available space-y-3">
+                <h3 class="text-lg font-semibold text-stone-800 mb-3 flex justify-between">
+                    <span class="text-left">Options disponibles :</span>
+                    <span class="text-right" dir="rtl">الخيارات المتاحة :</span>
+                </h3>
 
-                    <button onclick="shareProduct()"
-                        class="bg-sage-600 hover:bg-sage-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                        <i class="fas fa-share mr-2"></i>Partager
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {% for variant in variants %}
+                    <div>
+                        <input type="radio" name="variant" id="variant-{{ variant.id }}" value="{{ variant.id }}"
+                               class="hidden peer" {% if forloop.first %}checked{% endif %}>
+                        <label for="variant-{{ variant.id }}" 
+                               class="block p-4 border-2 rounded-lg cursor-pointer transition-all
+                                      peer-checked:border-olive-600 peer-checked:bg-olive-50
+                                      hover:border-stone-400 border-stone-200">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-left font-medium text-stone-800">{{ variant.name }}</span>
+                                    <span class="text-right font-medium text-stone-800" dir="rtl">{{ variant.name_ar }}</span>
+                                    <span class="block text-olive-600 font-bold mt-1">{{ variant.price }} MAD</span>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Quantity & Buttons -->
+            <form method="post" action="{% url 'add_to_cart' product.id %}" id="cart-forms" class="mt-6 space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="variant_id" id="variant-id-input" value="{{ variants.first.id }}">
+                <input type="hidden" name="quantity" id="quantity-input" value="1">
+
+                <div class="quantity-selector flex flex-col sm:flex-row sm:items-center gap-4">
+                    <label class="flex justify-between w-full sm:w-auto">
+                        <span class="text-left font-medium text-stone-800">Quantité</span>
+                        <span class="text-right font-medium text-stone-800" dir="rtl">الكمية</span>
+                    </label>
+                    <div class="flex items-center border rounded-md overflow-hidden w-40">
+                        <button type="button" id="quantity-decrease"
+                            class="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-xl font-bold">−</button>
+                        <input type="number" id="quantity-display" value="1" min="1"
+                            class="w-full text-center outline-none px-3 py-2">
+                        <button type="button" id="quantity-increase"
+                            class="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-xl font-bold">+</button>
+                    </div>
+                    <p class="font-bold text-olive-600 text-lg" id="total-price">Total: {{ variants.first.price }} MAD</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <button type="submit" formaction="{% url 'add_to_cart' product.id %}"
+                        class="w-full bg-olive-600 hover:bg-olive-700 text-white px-6 py-4 rounded-lg font-semibold text-lg">
+                        <i class="fas fa-shopping-cart mr-2"></i> 
+                        <span class="text-left">Ajouter au panier</span> 
+                        <span class="text-right" dir="rtl">أضف للسلة</span>
+                    </button>
+
+                    <button type="submit" formaction="{% url 'direct_order' product.id %}"
+                        class="w-full bg-sage-600 hover:bg-sage-700 text-white px-6 py-4 rounded-lg font-semibold text-lg">
+                        <i class="fas fa-bolt mr-2"></i> 
+                        <span class="text-left">Commander Direct</span> 
+                        <span class="text-right" dir="rtl">اطلب مباشرة</span>
                     </button>
                 </div>
-            </div>
-
-            <!-- Informations supplémentaires -->
-            <div class="bg-stone-50 rounded-lg p-6 space-y-3">
-                <h4 class="font-semibold text-stone-800 mb-3">
-                    <i class="fas fa-info-circle mr-2 text-olive-600"></i>Informations
-                </h4>
-                <div class="flex items-center text-sm text-stone-600">
-                    <i class="fas fa-check-circle mr-3 text-green-600"></i>
-                    100% Naturel et Bio
-                </div>
-                <div class="flex items-center text-sm text-stone-600">
-                    <i class="fas fa-shipping-fast mr-3 text-blue-600"></i>
-                    Livraison dans tout le Maroc
-                </div>
-                <div class="flex items-center text-sm text-stone-600">
-                    <i class="fas fa-users mr-3 text-olive-600"></i>
-                    Produit de coopérative
-                </div>
-            </div>
+            </form>
         </div>
     </div>
-
-    <!-- Avis sur ce produit -->
-    {% if product_reviews %}
-    <section class="mb-16">
-        <h2 class="text-2xl font-bold text-stone-800 mb-8">
-            <i class="fas fa-comments mr-3 text-olive-600"></i>
-            Avis sur ce produit
-        </h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for review in product_reviews %}
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center mb-4">
-                    <div
-                        class="w-10 h-10 bg-olive-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        {{ review.author.first_name.0|default:review.author.username.0 }}
-                    </div>
-                    <div class="ml-3">
-                        <div class="font-semibold text-stone-800">
-                            {{ review.author.first_name|default:review.author.username }}
-                        </div>
-                        <div class="text-sm text-stone-500">
-                            {{ review.created_at|date:"d M Y" }}
-                        </div>
-                    </div>
-                </div>
-
-                <h4 class="font-semibold text-stone-800 mb-2">{{ review.title }}</h4>
-                <p class="text-stone-600">{{ review.content|truncatewords:30 }}</p>
-            </div>
-            {% endfor %}
+    <!--<div class="grid grid-cols-1 lg:grid-cols-2 gap-10">-->
+    <!-- Informations -->
+    <section class="bg-stone-50 rounded-lg p-6 space-y-3 border border-stone-200 mt-6">
+        <h4 class="font-semibold text-stone-800 mb-3">
+            <i class="fas fa-info-circle mr-2 text-olive-600"></i>Informations
+        </h4>
+        <div class="flex items-center text-sm text-stone-600">
+            <i class="fas fa-check-circle mr-3 text-green-600"></i>100% Naturel et Bio
         </div>
-
-        <div class="text-center mt-8">
-            <a href="{% url 'community' %}?type=review" class="text-olive-600 hover:text-olive-700 font-medium">
-                Voir tous les avis →
+        <div class="flex items-center text-sm text-stone-600">
+            <i class="fas fa-shipping-fast mr-3 text-blue-600"></i>Livraison dans tout le Maroc
+        </div>
+        <div class="flex items-center text-sm text-stone-600">
+            <i class="fas fa-users mr-3 text-olive-600"></i>Produit de coopérative
+        </div>
+        <div class="grid grid-cols-2 gap-4 mt-4">
+            <a href="{% url 'product_list' %}" 
+               class="bg-stone-200 hover:bg-stone-300 text-stone-800 px-6 py-3 rounded-lg font-medium text-center">
+                <i class="fas fa-arrow-left mr-2"></i>Retour
             </a>
+
+            <button onclick="shareProduct()" 
+                    class="bg-sage-600 hover:bg-sage-700 text-white px-6 py-3 rounded-lg font-medium w-full">
+                <i class="fas fa-share mr-2"></i>Partager
+            </button>
         </div>
     </section>
-    {% endif %}
+<!--</div>-->
 
-    <!-- Produits similaires -->
-    {% if related_products %}
-    <section>
-        <h2 class="text-2xl font-bold text-stone-800 mb-8">
-            <i class="fas fa-leaf mr-3 text-sage-600"></i>
-            Produits similaires
-        </h2>
+<!-- Descriptions -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+    <h3 class="text-xl font-semibold text-stone-800 mb-2">الوصف</h3>
+    <p class="text-stone-700">{{ product.description_ar }}</p>
+</div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+    <h3 class="text-xl font-semibold text-stone-800 mb-2">Description</h3>
+    <p class="text-stone-700">{{ product.description }}</p>
+</div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for related_product in related_products %}
-            <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                {% if related_product.image %}
-                <img src="{{ related_product.image.url }}" alt="{{ related_product.name }}"
-                    class="w-full h-40 object-cover">
-                {% else %}
+{% include 'includes/review_section.html' %}
+
+{% if related_products %}
+<section class="mt-12">
+    <h2 class="text-2xl font-bold text-stone-800 mb-8">
+        <i class="fas fa-leaf mr-3 text-sage-600"></i>Produits similaires
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for related_product in related_products %}
+        <article class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+            {% if related_product.image %}
+                <img src="{{ related_product.image.url }}" alt="{{ related_product.name }}" class="w-full h-40 object-cover" />
+            {% else %}
                 <div class="w-full h-40 bg-stone-200 flex items-center justify-center">
                     <i class="fas fa-leaf text-3xl text-stone-400"></i>
                 </div>
-                {% endif %}
-
-                <div class="p-4">
-                    <h3 class="font-semibold text-stone-800 mb-2 line-clamp-1">
-                        {{ related_product.name }}
-                    </h3>
-
-                    <div class="flex items-center justify-between">
-                        <span class="text-lg font-bold text-olive-600">
-                            {{ related_product.price }} MAD
-                        </span>
-
-                        <div class="flex gap-1">
-                            <a href="{{ related_product.get_absolute_url }}"
-                                class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded text-xs transition-colors">
-                                Voir
-                            </a>
-                            <a href="{% url 'order_create' %}?product={{ related_product.id }}"
-                                class="bg-olive-600 hover:bg-olive-700 text-white px-2 py-1 rounded text-xs transition-colors">
-                                Commander
-                            </a>
-                        </div>
+            {% endif %}
+            <div class="p-4">
+                <h3 class="font-semibold text-stone-800 mb-2 line-clamp-1">{{ related_product.name }}</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-lg font-bold text-olive-600">{{ related_product.price }} MAD</span>
+                    <div class="flex gap-1">
+                        <a href="{{ related_product.get_absolute_url }}" 
+                           class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded text-xs">Voir</a>
+                        <a href="{% url 'add_to_cart' related_product.id %}" 
+                           class="bg-olive-600 hover:bg-olive-700 text-white px-2 py-1 rounded text-xs">Ajouter</a>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 </div>
-
 <script>
-    function shareProduct() {
-        if (navigator.share) {
-            navigator.share({
-                title: '{{ product.name }} - AmodGreen',
-                text: '{{ product.description|truncatewords:20 }}',
-                url: window.location.href
-            });
-        } else {
-            // Fallback: copier l'URL
-            navigator.clipboard.writeText(window.location.href);
-            alert('Lien copié dans le presse-papier !');
-        }
+document.addEventListener('DOMContentLoaded', () => {
+    const variants = {};
+    {% for variant in variants %}
+        variants["{{ variant.id }}"] = {{ variant.price }};
+    {% endfor %}
+
+    const quantityDisplay = document.getElementById('quantity-display');
+    const quantityInput = document.getElementById('quantity-input');
+    const variantInput = document.getElementById('variant-id-input');
+    const totalPriceElement = document.getElementById('total-price');
+    const productPriceElement = document.getElementById('product-price');
+
+    function updatePrices() {
+        const variantId = variantInput.value;
+        let qty = parseInt(quantityDisplay.value);
+        if (isNaN(qty) || qty < 1) qty = 1;
+        const price = variants[variantId] || 0;
+        const total = price * qty;
+        totalPriceElement.textContent = `Total: ${total} MAD`;
+        productPriceElement.textContent = `${price} MAD`;
     }
+
+    function syncQuantity() {
+        let val = parseInt(quantityDisplay.value);
+        if (isNaN(val) || val < 1) val = 1;
+        quantityDisplay.value = val;
+        quantityInput.value = val;
+    }
+
+    document.getElementById('quantity-increase').addEventListener('click', () => {
+        quantityDisplay.value = parseInt(quantityDisplay.value) + 1;
+        syncQuantity();
+        updatePrices();
+    });
+
+    document.getElementById('quantity-decrease').addEventListener('click', () => {
+        if (parseInt(quantityDisplay.value) > 1) {
+            quantityDisplay.value = parseInt(quantityDisplay.value) - 1;
+            syncQuantity();
+            updatePrices();
+        }
+    });
+
+    quantityDisplay.addEventListener('input', () => {
+        syncQuantity();
+        updatePrices();
+    });
+
+    document.querySelectorAll('input[name="variant"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            variantInput.value = this.value;
+            updatePrices();
+        });
+    });
+
+    updatePrices();
+});
+
+function shareProduct() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ product.name }} - AmodGreen',
+            text: '{{ product.description|truncatewords:20 }}',
+            url: window.location.href
+        });
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Lien copié dans le presse-papier !');
+    }
+}
 </script>
+
+<style>
+.options-available {
+    margin-top: 2rem;
+}
+.quantity-selector {
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.quantity-selector input[type="number"] {
+    width: 4rem;
+    text-align: center;
+    padding: 0.25rem 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+.quantity-selector button {
+    background-color: #a3b18a;
+    border: none;
+    padding: 0.35rem 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s ease-in-out;
+}
+.quantity-selector button:hover {
+    background-color: #7a8b5e;
+    color: #fff;
+}
+</style>
 {% endblock %}

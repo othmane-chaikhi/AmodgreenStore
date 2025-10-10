@@ -5,9 +5,8 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'En attente'),
         ('contacted', 'Client contacté'),
-        ('confirmed', 'Confirmée'),
-        ('delivered', 'Livrée'),
-        ('cancelled', 'Annulée'),
+        ('delivered', 'Livré'),
+        ('cancelled', 'Annulé'),
     ]
 
     is_deleted = models.BooleanField(default=False)
@@ -33,6 +32,10 @@ class Order(models.Model):
         verbose_name = "Commande"
         verbose_name_plural = "Commandes"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['status']),
+        ]
 
     def __str__(self):
         return f"Commande #{self.id} - {self.full_name}"

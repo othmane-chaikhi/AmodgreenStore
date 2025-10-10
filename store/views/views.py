@@ -21,8 +21,8 @@ from store.telegram import send_telegram_message
 
 # -------------------- HOME --------------------
 def home(request):
-    featured_products = Product.objects.filter(is_available=True)[:6]
-    latest_reviews = CommunityPost.objects.filter(is_approved=True)[:5]
+    featured_products = Product.objects.filter(is_available=True).select_related('category').prefetch_related('variants')[:6]
+    latest_reviews = CommunityPost.objects.select_related('product', 'author').filter(is_approved=True)[:5]
 
     context = {
         'featured_products': featured_products,
@@ -35,7 +35,7 @@ def home(request):
 
 # -------------------- PRODUCT LIST --------------------
 def product_list(request):
-    products = Product.objects.filter(is_available=True)
+    products = Product.objects.filter(is_available=True).select_related('category')
     categories = Category.objects.all()
 
     category_id = request.GET.get('category')
@@ -65,12 +65,12 @@ def product_list(request):
 
 # -------------------- PRODUCT DETAIL --------------------
 def product_detail(request, pk):
-    product = get_object_or_404(Product, pk=pk, is_available=True)
+    product = get_object_or_404(Product.objects.select_related('category').prefetch_related('variants', 'additional_images'), pk=pk, is_available=True)
     related_products = Product.objects.filter(
         category=product.category, is_available=True
-    ).exclude(pk=product.pk)[:4]
+    ).exclude(pk=product.pk).only('id','name','image','price')[:4]
 
-    product_reviews = CommunityPost.objects.filter(
+    product_reviews = CommunityPost.objects.select_related('author').filter(
         product=product, is_approved=True, rating__isnull=False
     ).order_by('-created_at')[:5]
 
@@ -202,7 +202,11 @@ def direct_order(request, product_id):
     except (TypeError, ValueError):
         quantity = 1
 
-    if request.method == 'POST':
+    # Only bind the form when user actually submits order fields, not when arriving from product page
+    posted_fields = {'full_name', 'phone', 'city', 'address'}
+    is_real_submit = request.method == 'POST' and any(field in request.POST for field in posted_fields)
+
+    if is_real_submit:
         form = OrderForm(request.POST)
         if form.is_valid():
             order = form.save(commit=False)

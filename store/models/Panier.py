@@ -20,6 +20,12 @@ class Cart(models.Model):
     session_key = models.CharField(max_length=40, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['session_key']),
+        ]
+
     def total_price(self):
         return sum(item.total_price() for item in self.items.all())
 
@@ -30,6 +36,11 @@ class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE)  # ✅ changé ici
     quantity = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['cart', 'variant'], name='unique_variant_per_cart')
+        ]
 
     def total_price(self):
         return self.variant.price * self.quantity

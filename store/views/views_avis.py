@@ -9,7 +9,7 @@ from store.forms import CommunityPostForm
 
 def product_reviews(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    reviews = CommunityPost.objects.filter(
+    reviews = CommunityPost.objects.select_related('author').filter(
         product=product,
         is_approved=True,
         rating__isnull=False

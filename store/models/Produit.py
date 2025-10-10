@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Nom")
+    name = models.CharField(max_length=100, verbose_name="Nom", db_index=True)
     name_ar = models.CharField(max_length=100, blank=True, verbose_name="Nom (Arabe)")
     description = models.TextField(blank=True, verbose_name="Description")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -19,6 +19,9 @@ class Category(models.Model):
         verbose_name = "Catégorie"
         verbose_name_plural = "Catégories"
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+        ]
 
     def __str__(self):
         return self.name
@@ -33,7 +36,7 @@ class Product(models.Model):
     ingredients_ar = models.TextField(blank=True, verbose_name="Ingrédients (Arabe)")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix (MAD)")
     image = models.ImageField(upload_to='products/', verbose_name="Image principale")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Catégorie")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Catégorie", related_name='products')
     is_available = models.BooleanField(default=True, verbose_name="Disponible")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -64,13 +67,10 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        if not self.pk:
-            super().save(*args, **kwargs)
-        if self.image:
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
+        # Optimize image once after ensuring file exists
+        if self.image and os.path.isfile(self.image.path):
             self._optimize_image(self.image.path)
-        else:
-            super().save(*args, **kwargs)
 
     def _optimize_image(self, path):
         try:
@@ -94,13 +94,13 @@ class Product(models.Model):
 
     def average_rating(self):
         from django.db.models import Avg
-        return self.communitypost_set.filter(
+        return self.community_posts.filter(
             rating__isnull=False,
             is_approved=True
         ).aggregate(Avg('rating'))['rating__avg'] or 0
 
     def review_count(self):
-        return self.communitypost_set.filter(is_approved=True).count()
+        return self.community_posts.filter(is_approved=True).count()
 
     def get_default_variant_price(self):
         return self.default_variant.price if self.default_variant else self.price

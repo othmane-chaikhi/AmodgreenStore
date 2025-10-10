@@ -44,7 +44,14 @@
 
     <!-- Formulaire de commande -->
     <div class="bg-white rounded-lg shadow-md p-8">
-        <form method="post" class="space-y-6">
+        {% if form.is_bound and form.non_field_errors %}
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 rounded p-4">
+            {% for err in form.non_field_errors %}
+            <p>{{ err }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <form method="post" class="space-y-6" novalidate>
             {% csrf_token %}
 
             <!-- Informations personnelles -->
@@ -59,7 +66,7 @@
                             {{ form.full_name.label }} (الاسم الكامل)
                         </label>
                         {{ form.full_name }}
-                        {% if form.full_name.errors %}
+                        {% if form.is_bound and form.full_name.errors %}
                         <p class="text-red-600 text-sm mt-1">{{ form.full_name.errors.0 }}</p>
                         {% endif %}
                     </div>
@@ -69,7 +76,7 @@
                             {{ form.phone.label }} (رقم الهاتف)
                         </label>
                         {{ form.phone }}
-                        {% if form.phone.errors %}
+                        {% if form.is_bound and form.phone.errors %}
                         <p class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</p>
                         {% endif %}
                     </div>
@@ -88,7 +95,7 @@
                             {{ form.city.label }} (المدينة)
                         </label>
                         {{ form.city }}
-                        {% if form.city.errors %}
+                        {% if form.is_bound and form.city.errors %}
                         <p class="text-red-600 text-sm mt-1">{{ form.city.errors.0 }}</p>
                         {% endif %}
                     </div>
@@ -98,7 +105,7 @@
                             {{ form.address.label }} (العنوان الكامل)
                         </label>
                         {{ form.address }}
-                        {% if form.address.errors %}
+                        {% if form.is_bound and form.address.errors %}
                         <p class="text-red-600 text-sm mt-1">{{ form.address.errors.0 }}</p>
                         {% endif %}
                     </div>
@@ -123,7 +130,7 @@
                     {{ form.notes.label }} (ملاحظات إضافية)
                 </label>
                 {{ form.notes }}
-                {% if form.notes.errors %}
+                {% if form.is_bound and form.notes.errors %}
                 <p class="text-red-600 text-sm mt-1">{{ form.notes.errors.0 }}</p>
                 {% endif %}
             </div>

@@ -15,7 +15,7 @@ def view_cart(request):
 def add_to_cart(request, product_id):
     """Ajouter un produit (et variante) au panier."""
     product = get_object_or_404(Product, id=product_id)
-    variants = ProductVariant.objects.filter(product=product)
+    variants = ProductVariant.objects.filter(product=product).only('id','name','price','product_id')
 
     # Récupérer la variante
     variant_id = request.POST.get('variant_id')

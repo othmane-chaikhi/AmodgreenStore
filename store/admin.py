@@ -119,7 +119,7 @@ class CommunityPostAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Contenu', {
-            'fields': ('author', 'title', 'content', 'post_type', 'product')
+            'fields': ('author', 'title', 'content', 'product', 'rating', 'image')
         }),
         ('Modération', {
             'fields': ('is_approved',)

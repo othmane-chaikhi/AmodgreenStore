@@ -332,10 +332,11 @@ class CategoryForm(forms.ModelForm):
 
 class OrderExportFilterForm(forms.Form):
     PERIOD_CHOICES = [
-        ('today', "Aujourd'hui"),
-        ('last_3_days', "3 derniers jours"),
-        ('last_week', "Semaine dernière"),
-        ('last_month', "Mois dernier"),
-        ('last_year', "Année dernière"),
+        ('all', 'Toutes les commandes'),
+        ('today', 'Aujourd\'hui'),
+        ('last_3_days', '3 derniers jours'),
+        ('last_week', 'Semaine dernière'),
+        ('last_month', 'Mois dernier'),
+        ('last_year', 'Année dernière'),
     ]
-    period = forms.ChoiceField(choices=PERIOD_CHOICES, required=True)
+    period = forms.ChoiceField(choices=PERIOD_CHOICES, required=False, label='Période')

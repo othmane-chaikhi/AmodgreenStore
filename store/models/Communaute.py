@@ -17,7 +17,8 @@ class CommunityPost(models.Model):
     product = models.ForeignKey(
         'store.Product', 
         on_delete=models.CASCADE, 
-        verbose_name="Produit lié"
+        verbose_name="Produit lié",
+        related_name='community_posts'
     )
     rating = models.PositiveSmallIntegerField(
         choices=[
@@ -43,6 +44,10 @@ class CommunityPost(models.Model):
         verbose_name = "Avis produit"
         verbose_name_plural = "Avis produits"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['product']),
+        ]
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

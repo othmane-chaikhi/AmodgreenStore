@@ -9,9 +9,10 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = 'django-insecure-your-secret-key-change-in-production'
-DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# Prefer environment variables with safe defaults for local dev
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-your-secret-key-change-in-production')
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in {'1', 'true', 'yes'}
+ALLOWED_HOSTS = [h for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h]
 
 # Application definition
 INSTALLED_APPS = [
@@ -38,7 +39,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'store.middlewares.MediaNotFoundMiddleware',
-    'django.middleware.common.CommonMiddleware',  
 ]
 
 ROOT_URLCONF = 'amodgreen.urls'
@@ -59,7 +59,7 @@ TEMPLATES = [
         },
     },
 ]
-# Spécifiez le template pack que vous utilisez
+# Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 CRISPY_TEMPLATE_PACK = "tailwind"
 
@@ -69,11 +69,11 @@ WSGI_APPLICATION = 'amodgreen.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'amodgreen_db',     
-        'USER': 'root',             
-        'PASSWORD': 'root',              
-        'HOST': '127.0.0.1',         
-        'PORT': '3306',
+        'NAME': os.getenv('MYSQL_DATABASE', 'amodgreen_db'),
+        'USER': os.getenv('MYSQL_USER', 'root'),
+        'PASSWORD': os.getenv('MYSQL_PASSWORD', 'root'),
+        'HOST': os.getenv('MYSQL_HOST', '127.0.0.1'),
+        'PORT': os.getenv('MYSQL_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
         }
@@ -113,9 +113,6 @@ LANGUAGES = [
 LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]
-LOCALE_PATHS = [
-    BASE_DIR / 'locale',
-]
 
 # Static files
 STATIC_URL = '/static/'
@@ -138,21 +135,76 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'store.CustomUser'
 
-# Crispy Forms
-CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
-CRISPY_TEMPLATE_PACK = "tailwind"
-
 # Login/Logout URLs
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Admin settings
-ADMIN_WHATSAPP = "+212631889579"
-ADMIN_EMAIL = "admin@example.com"
-ADMIN_ADDRESS = "Rabat, Maroc"
-ADMIN_WHATSAPP_NUMBER = '212631889579'
+ADMIN_WHATSAPP = os.getenv('ADMIN_WHATSAPP', "+212631889579")
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', "admin@example.com")
+ADMIN_ADDRESS = os.getenv('ADMIN_ADDRESS', "Rabat, Maroc")
+ADMIN_WHATSAPP_NUMBER = os.getenv('ADMIN_WHATSAPP_NUMBER', '212631889579')
 
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
 
-TELEGRAM_BOT_TOKEN = '8297807115:AAGxxGv6rL9bF6h_XW2JsGW2RfdHbmK761U'
-TELEGRAM_CHAT_ID = '1734276901'  
+# Security settings for production
+CSRF_TRUSTED_ORIGINS = [o for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o]
+
+# Production settings
+if not DEBUG:
+    # Security headers
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in {'1','true','yes'}
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Hide Django errors in production
+    ALLOWED_HOSTS = [h for h in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if h]
+    
+    # Logging configuration for production
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'file': {
+                'level': 'ERROR',
+                'class': 'logging.FileHandler',
+                'filename': BASE_DIR / 'logs' / 'django_errors.log',
+                'formatter': 'verbose',
+            },
+            'console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file', 'console'],
+                'level': 'ERROR',
+                'propagate': True,
+            },
+            'store': {
+                'handlers': ['file', 'console'],
+                'level': 'ERROR',
+                'propagate': True,
+            },
+        },
+    }
+    
+    # Create logs directory
+    os.makedirs(BASE_DIR / 'logs', exist_ok=True)

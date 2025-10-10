@@ -48,8 +48,13 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-stone-200">
                     {% for order in orders %}
-                    <tr class="hover:bg-stone-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">#{{ order.id }}</td>
+                    <tr class="hover:bg-stone-50 {% if order.is_deleted %}bg-red-50{% endif %}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">
+                            #{{ order.id }}
+                            {% if order.is_deleted %}
+                                <span class="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">Supprimée</span>
+                            {% endif %}
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">{{ order.full_name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">{{ order.created_at|date:"d/m/Y H:i" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">{{ order.get_total_cost }} MAD</td>
@@ -65,6 +70,17 @@
                             <a href="{% url 'order_detail' order.id %}" class="text-olive-600 hover:text-olive-800 mr-3">
                                 <i class="fas fa-eye"></i> Voir
                             </a>
+                            {% if order.is_deleted %}
+                                <a href="{% url 'restore_order' order.id %}" class="text-green-600 hover:text-green-800" 
+                                   onclick="return confirm('Restaurer la commande #{{ order.id }} ?');">
+                                    <i class="fas fa-undo"></i> Restaurer
+                                </a>
+                            {% else %}
+                                <a href="{% url 'delete_order' order.id %}" class="text-red-600 hover:text-red-800" 
+                                   onclick="return confirm('Supprimer la commande #{{ order.id }} ? Cette action libérera le stock.');">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}

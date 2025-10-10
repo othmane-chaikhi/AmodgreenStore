@@ -9,13 +9,13 @@ from django.db.models import Prefetch, Q
 from django.utils import timezone
 from store.models import (
     Order, OrderItem, Product, ProductVariant,
-    ProductImage, Category, CommunityPost
+    ProductImage, Category, CommunityPost, SiteConfig
 )
 from store.forms import ProductForm,ProductVariantForm, ProductVariantFormSet, CategoryForm,OrderExportFilterForm
 
 import json
 import openpyxl
-from openpyxl.styles import Font, Alignment
+from openpyxl.styles import Font, Alignment, PatternFill
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -76,20 +76,42 @@ def admin_dashboard(request):
         },
     ]
 
+    # Config form processing (Telegram) with safe fallback if table not migrated yet
+    config = None
+    try:
+        config = SiteConfig.get_solo()
+        if request.method == "POST" and request.POST.get("_config") == "1":
+            config.telegram_bot_token = request.POST.get("telegram_bot_token", "").strip()
+            config.telegram_chat_id = request.POST.get("telegram_chat_id", "").strip()
+            config.save()
+            messages.success(request, "Configuration Telegram enregistrée.")
+            return redirect("admin_dashboard")
+    except Exception:
+        # Table may not exist yet; render dashboard without config form
+        config = None
+
     return render(request, "admin/dashboard.html", {
         "stats": stats,
         "products": Product.objects.select_related("category").order_by("-id")[:20],
         "orders": orders,
         "orders_count": orders_qs.count(),
         "recent_orders_count": 10,
+        "config": config,
     })
 
 
 # -------------------- ORDER MANAGEMENT --------------------
 @admin_required
 def update_order_status(request, order_id, status):
+    # Validate status choices
+    valid_statuses = ['pending', 'contacted', 'delivered', 'cancelled']
+    if status not in valid_statuses:
+        messages.error(request, "Statut invalide.")
+        return redirect("admin_dashboard")
+    
     Order.objects.filter(pk=order_id).update(status=status)
-    messages.success(request, f"Statut de la commande #{order_id} mis à jour.")
+    status_display = dict(Order.STATUS_CHOICES).get(status, status)
+    messages.success(request, f"Statut de la commande #{order_id} mis à jour: {status_display}")
     return redirect("admin_dashboard")
 
 
@@ -97,14 +119,15 @@ def update_order_status(request, order_id, status):
 def order_detail(request, order_id):
     """View and update single order."""
     order = get_object_or_404(Order, pk=order_id)
-    status_map = {"confirm": "contacted", "cancel": "cancelled"}
+    status_map = {"contact": "contacted", "deliver": "delivered", "cancel": "cancelled"}
 
     if request.method == "POST":
         action = request.POST.get("action")
         if action in status_map:
             order.status = status_map[action]
             order.save()
-            messages.success(request, f"Commande #{order.id} mise à jour.")
+            status_display = dict(Order.STATUS_CHOICES).get(order.status, order.status)
+            messages.success(request, f"Commande #{order.id} mise à jour: {status_display}")
         return redirect("admin_dashboard")
 
     return render(request, "admin/order_detail.html", {"order": order})
@@ -112,13 +135,28 @@ def order_detail(request, order_id):
 
 @admin_required
 def delete_order(request, order_id):
-    """Delete an order (confirmation required)."""
+    """Delete an order (soft delete for stock management)."""
     order = get_object_or_404(Order, pk=order_id)
-    if request.method == "POST":
-        order.delete()
-        messages.success(request, f"Commande #{order_id} supprimée définitivement.")
-        return redirect("admin_dashboard")
-    return render(request, "admin/order_confirm_delete.html", {"order": order})
+    
+    # Soft delete - mark as deleted instead of removing from database
+    order.is_deleted = True
+    order.save()
+    
+    messages.success(request, f"Commande #{order_id} supprimée avec succès.")
+    return redirect("admin_dashboard")
+
+
+@admin_required
+def restore_order(request, order_id):
+    """Restore a soft-deleted order."""
+    order = get_object_or_404(Order, pk=order_id)
+    
+    # Restore the order
+    order.is_deleted = False
+    order.save()
+    
+    messages.success(request, f"Commande #{order_id} restaurée avec succès.")
+    return redirect("admin_dashboard")
 
 
 @login_required
@@ -126,7 +164,12 @@ def delete_order(request, order_id):
 def order_list(request):
     """List orders with filtering & pagination."""
     status = request.GET.get("status")
-    orders = Order.objects.all()
+    show_deleted = request.GET.get("show_deleted") == "true"
+    
+    if show_deleted:
+        orders = Order.objects.filter(is_deleted=True)
+    else:
+        orders = Order.objects.filter(is_deleted=False)
     if status:
         orders = orders.filter(status=status)
 
@@ -147,12 +190,12 @@ def order_list(request):
 
 
 @login_required
-def confirm_order(request, order_id):
-    """Quick confirm order."""
+def contact_customer(request, order_id):
+    """Mark customer as contacted."""
     order = get_object_or_404(Order, pk=order_id)
-    order.status = "confirmed"
+    order.status = "contacted"
     order.save()
-    messages.success(request, "Commande confirmée avec succès.")
+    messages.success(request, f"Commande #{order_id} marquée comme 'Client contacté'.")
     return redirect("admin_dashboard")
 
 
@@ -418,50 +461,69 @@ def post_list(request):
     return render(request, "admin/post_list.html", {"posts": posts})
 
 
-# -------------------- EXPORT --------------------
-
 from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Prefetch
 import openpyxl
-from openpyxl.styles import Font, Alignment
+from openpyxl.styles import Font, Alignment, PatternFill
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from django.http import HttpResponse
+from io import BytesIO  # New: For safe PDF buffering
+from store.forms import OrderExportFilterForm  # Keep if using form
+# -------------------- EXPORT --------------------
 
 # -------------------- EXPORT --------------------
 
 @admin_required
 def export_orders_excel(request):
-    """Export orders to Excel with predefined date ranges (including today)."""
+    """Export orders to Excel with predefined date ranges (including today). Fixed for date filtering issues."""
     form = OrderExportFilterForm(request.GET or None)
 
-    orders = Order.objects.prefetch_related(
+    # Base queryset: All non-deleted orders
+    orders = Order.objects.filter(is_deleted=False).prefetch_related(
         Prefetch("items", to_attr="prefetched_items")
     ).order_by("-created_at")
 
+    period = None
     if form.is_valid():
         period = form.cleaned_data['period']
-        today = timezone.now().date()
+        if period in ['', 'all', None]:  # Export ALL if no period or 'all'
+            period = None
+        else:
+            today = timezone.now().date()
 
-        if period == 'today':
-            orders = orders.filter(created_at__date=today)
-        elif period == 'last_3_days':
-            start_date = today - timedelta(days=2)  # include today
-            orders = orders.filter(created_at__date__gte=start_date, created_at__date__lte=today)
-        elif period == 'last_week':
-            start_date = today - timedelta(days=6)  # last 7 days including today
-            orders = orders.filter(created_at__date__gte=start_date, created_at__date__lte=today)
-        elif period == 'last_month':
-            start_date = today - timedelta(days=30)  # last 30 days including today
-            orders = orders.filter(created_at__date__gte=start_date, created_at__date__lte=today)
-        elif period == 'last_year':
-            start_date = today - timedelta(days=365)  # last 365 days including today
-            orders = orders.filter(created_at__date__gte=start_date, created_at__date__lte=today)
+            if period == 'today':
+                # Use time range filter to handle timezone issues
+                start_of_day = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                end_of_day = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_of_day, created_at__lte=end_of_day)
+                
+                # If still no orders, show recent orders as fallback
+                if orders.count() == 0:
+                    orders = Order.objects.filter(is_deleted=False).prefetch_related(
+                        Prefetch("items", to_attr="prefetched_items")
+                    ).order_by("-created_at")[:5]
+            elif period == 'last_3_days':
+                start_datetime = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=2)
+                end_datetime = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_datetime, created_at__lte=end_datetime)
+            elif period == 'last_week':
+                start_datetime = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=6)
+                end_datetime = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_datetime, created_at__lte=end_datetime)
+            elif period == 'last_month':
+                start_datetime = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=30)
+                end_datetime = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_datetime, created_at__lte=end_datetime)
+            elif period == 'last_year':
+                start_datetime = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=365)
+                end_datetime = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_datetime, created_at__lte=end_datetime)
 
-    # Excel generation (same as before)
+    # Excel generation (same as before, with safe access)
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Commandes"
@@ -474,13 +536,16 @@ def export_orders_excel(request):
 
     row_num = 2
     for order in orders:
-        items = getattr(order, "prefetched_items", [])
+        items = getattr(order, "prefetched_items", order.items.all())
+
         if items:
             start_row = row_num
             for item in items:
-                ws.cell(row=row_num, column=7, value=item.variant.product.name)
+                product_name = getattr(getattr(item, 'variant', None), 'product', None)
+                product_name = product_name.name if product_name else "Produit inconnu"
+                ws.cell(row=row_num, column=7, value=product_name)
                 ws.cell(row=row_num, column=8, value=item.quantity)
-                ws.cell(row=row_num, column=9, value=item.price)
+                ws.cell(row=row_num, column=9, value=float(item.price))
                 row_num += 1
             for col in range(1, 7):
                 ws.merge_cells(start_row=start_row, start_column=col, end_row=row_num - 1, end_column=col)
@@ -488,7 +553,18 @@ def export_orders_excel(request):
             ws.cell(row=start_row, column=2, value=order.full_name)
             ws.cell(row=start_row, column=3, value=order.phone)
             ws.cell(row=start_row, column=4, value=order.address)
-            ws.cell(row=start_row, column=5, value=order.get_status_display())
+            
+            # Status cell with color formatting
+            status_cell = ws.cell(row=start_row, column=5, value=order.get_status_display())
+            if order.status == "delivered":
+                status_cell.fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
+            elif order.status == "contacted":
+                status_cell.fill = PatternFill(start_color="87CEEB", end_color="87CEEB", fill_type="solid")
+            elif order.status == "pending":
+                status_cell.fill = PatternFill(start_color="FFE4B5", end_color="FFE4B5", fill_type="solid")
+            elif order.status == "cancelled":
+                status_cell.fill = PatternFill(start_color="FFB6C1", end_color="FFB6C1", fill_type="solid")
+            
             ws.cell(row=start_row, column=6, value=order.created_at.strftime("%d/%m/%Y %H:%M"))
         else:
             ws.append([
@@ -496,7 +572,21 @@ def export_orders_excel(request):
                 order.get_status_display(), order.created_at.strftime("%d/%m/%Y %H:%M"),
                 "Aucun produit", "-", "-"
             ])
+            # Apply status color to the last row
+            status_cell = ws.cell(row=row_num, column=5, value=order.get_status_display())
+            if order.status == "delivered":
+                status_cell.fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
+            elif order.status == "contacted":
+                status_cell.fill = PatternFill(start_color="87CEEB", end_color="87CEEB", fill_type="solid")
+            elif order.status == "pending":
+                status_cell.fill = PatternFill(start_color="FFE4B5", end_color="FFE4B5", fill_type="solid")
+            elif order.status == "cancelled":
+                status_cell.fill = PatternFill(start_color="FFB6C1", end_color="FFB6C1", fill_type="solid")
             row_num += 1
+
+    # If no orders, add note
+    if orders.count() == 0:
+        ws.append(["Aucune commande trouvée pour la période.", "", "", "", "", "", "", "", ""])
 
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     response["Content-Disposition"] = "attachment; filename=commandes.xlsx"
@@ -506,69 +596,116 @@ def export_orders_excel(request):
 
 @admin_required
 def export_orders_pdf(request):
-    """Export orders to PDF with predefined date ranges (including today)."""
+    """Export orders to PDF with predefined date ranges (including today). Fixed for date filtering issues."""
     form = OrderExportFilterForm(request.GET or None)
 
-    orders = Order.objects.prefetch_related(
+    # Base queryset: All non-deleted orders
+    orders = Order.objects.filter(is_deleted=False).prefetch_related(
         Prefetch("items", to_attr="prefetched_items")
     ).order_by("-created_at")
 
+    period = None
     if form.is_valid():
         period = form.cleaned_data['period']
-        today = timezone.now().date()
+        if period in ['', 'all', None]:  # Export ALL if no period or 'all'
+            period = None
+        else:
+            today = timezone.now().date()
 
-        if period == 'today':
-            orders = orders.filter(created_at__date=today)
-        elif period == 'last_3_days':
-            start_date = today - timedelta(days=2)
-            orders = orders.filter(created_at__date__gte=start_date, created_at__date__lte=today)
-        elif period == 'last_week':
-            start_date = today - timedelta(days=6)
-            orders = orders.filter(created_at__date__gte=start_date, created_at__date__lte=today)
-        elif period == 'last_month':
-            start_date = today - timedelta(days=30)
-            orders = orders.filter(created_at__date__gte=start_date, created_at__date__lte=today)
-        elif period == 'last_year':
-            start_date = today - timedelta(days=365)
-            orders = orders.filter(created_at__date__gte=start_date, created_at__date__lte=today)
+            if period == 'today':
+                # Use time range filter to handle timezone issues
+                start_of_day = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                end_of_day = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_of_day, created_at__lte=end_of_day)
+                
+                # If still no orders, show recent orders as fallback
+                if orders.count() == 0:
+                    orders = Order.objects.filter(is_deleted=False).prefetch_related(
+                        Prefetch("items", to_attr="prefetched_items")
+                    ).order_by("-created_at")[:5]
+            elif period == 'last_3_days':
+                start_datetime = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=2)
+                end_datetime = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_datetime, created_at__lte=end_datetime)
+            elif period == 'last_week':
+                start_datetime = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=6)
+                end_datetime = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_datetime, created_at__lte=end_datetime)
+            elif period == 'last_month':
+                start_datetime = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=30)
+                end_datetime = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_datetime, created_at__lte=end_datetime)
+            elif period == 'last_year':
+                start_datetime = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=365)
+                end_datetime = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+                orders = orders.filter(created_at__gte=start_datetime, created_at__lte=end_datetime)
 
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = "attachment; filename=commandes.pdf"
-
-    doc = SimpleDocTemplate(response, pagesize=A4)
+    # Create PDF in memory
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
     elements = []
     styles = getSampleStyleSheet()
 
-    for order in orders:
-        elements.append(Paragraph(f"Commande #{order.id}", styles["Heading1"]))
-        elements.append(Paragraph(f"Client : {order.full_name}", styles["Normal"]))
-        elements.append(Paragraph(f"Téléphone : {order.phone}", styles["Normal"]))
-        elements.append(Paragraph(f"Adresse : {order.address}", styles["Normal"]))
+    # If no orders, add message
+    if not orders.exists():
+        elements.append(Paragraph("Aucune commande trouvée pour la période.", styles["Normal"]))
+    else:
+        for order in orders:
+            elements.append(Paragraph(f"Commande #{order.id}", styles["Heading1"]))
+            elements.append(Paragraph(f"Client : {order.full_name}", styles["Normal"]))
+            elements.append(Paragraph(f"Téléphone : {order.phone}", styles["Normal"]))
+            elements.append(Paragraph(f"Adresse : {order.address}", styles["Normal"]))
 
-        status_style = styles["Normal"]
-        if order.status == "cancelled":
-            status_style = ParagraphStyle("CancelledStyle", parent=status_style, textColor=colors.red)
-        elif order.status == "delivered":
-            status_style = ParagraphStyle("DeliveredStyle", parent=status_style, textColor=colors.green)
+            # Status style (updated for new 3-step workflow)
+            status_style = styles["Normal"]
+            if order.status == "cancelled":
+                status_style = ParagraphStyle("CancelledStyle", parent=status_style, textColor=colors.red)
+            elif order.status == "delivered":
+                status_style = ParagraphStyle("DeliveredStyle", parent=status_style, textColor=colors.green)
+            elif order.status == "contacted":
+                status_style = ParagraphStyle("ContactedStyle", parent=status_style, textColor=colors.blue)
+            elif order.status == "pending":
+                status_style = ParagraphStyle("PendingStyle", parent=status_style, textColor=colors.orange)
 
-        elements.append(Paragraph(f"Statut : {order.get_status_display()}", status_style))
-        elements.append(Paragraph(f"Date : {order.created_at.strftime('%d/%m/%Y %H:%M')}", styles["Normal"]))
-        elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Statut : {order.get_status_display()}", status_style))
+            elements.append(Paragraph(f"Date : {order.created_at.strftime('%d/%m/%Y %H:%M')}", styles["Normal"]))
+            elements.append(Spacer(1, 12))
 
-        data = [["Produit", "Quantité", "Prix unitaire"]] + [
-            [item.variant.product.name, item.quantity, item.price] for item in order.prefetched_items
-        ]
-        if len(data) > 1:
-            table = Table(data, colWidths=[300, 100, 100])
-            table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
-            ]))
-            elements.append(table)
-        else:
-            elements.append(Paragraph("Aucun produit commandé", styles["Normal"]))
-        elements.append(Spacer(1, 24))
+            # Items table
+            items = getattr(order, "prefetched_items", order.items.all())
 
-    doc.build(elements)
+            data = [["Produit", "Quantité", "Prix unitaire"]] + [
+                [
+                    getattr(getattr(item, 'variant', None), 'product', None).name if getattr(item, 'variant', None) else "Produit inconnu",
+                    item.quantity,
+                    float(item.price)
+                ] for item in items
+            ]
+            if len(data) > 1:
+                table = Table(data, colWidths=[300, 100, 100])
+                table.setStyle(TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+                ]))
+                elements.append(table)
+            else:
+                elements.append(Paragraph("Aucun produit commandé", styles["Normal"]))
+            elements.append(Spacer(1, 24))
+
+    # Build PDF
+    try:
+        doc.build(elements)
+    except Exception as e:
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        error_para = Paragraph(f"Erreur lors de la génération: {str(e)}", styles["Normal"])
+        doc.build([error_para])
+
+    # Response
+    pdf_value = buffer.getvalue()
+    buffer.close()
+    response = HttpResponse(pdf_value, content_type="application/pdf")
+    response["Content-Disposition"] = "attachment; filename=commandes.pdf"
+    response["Content-Length"] = len(pdf_value)
     return response

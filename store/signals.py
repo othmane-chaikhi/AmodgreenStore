@@ -6,10 +6,11 @@ from store.models import Cart, Product, ProductImage, Order, CommunityPost, Prod
 from .telegram import send_telegram_message
 
 
-# 🛒 Supprimer les paniers anonymes liés à une session supprimée
-@receiver(pre_save, sender=Session)
+# 🛒 Supprimer les paniers anonymes lorsque la session est supprimée
+@receiver(post_delete, sender=Session)
 def delete_anonymous_carts(sender, instance, **kwargs):
-    Cart.objects.filter(session_key=instance.session_key, user__isnull=True).delete()
+    if instance.session_key:
+        Cart.objects.filter(session_key=instance.session_key, user__isnull=True).delete()
 
 
 # 📦 Notifier quand une commande est créée

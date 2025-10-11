@@ -22,10 +22,10 @@
                         {% for item in cart.items.all %}
                         <tr>
                             <td class="px-6 py-4 text-center">
-                                {{ item.variant.product.name }} - {{ item.variant.name }}
-                            </td>
+    {{ item.variant.product.name }} - {{ item.variant.name }}
+</td>
                             <td class="px-6 py-4 text-center">{{ item.quantity }}</td>
-                            <td class="px-6 py-4 text-center">{{ item.variant.price }} MAD</td>
+                            <td class="px-6 py-4 text-center">{{ item.product.price }} MAD</td>
                             <td class="px-6 py-4 text-center">{{ item.total_price }} MAD</td>
                             <td class="px-6 py-4 text-center">
                                 <a href="{% url 'remove_from_cart' item.id %}" class="text-red-600 hover:underline">

@@ -1,5 +1,4 @@
 {% load static %}
-{% load widget_tweaks %}
 
 <!DOCTYPE html>
 <html lang="fr" class="h-full">
@@ -70,16 +69,6 @@
 
                 </div>
 
-                <!-- Cart Icon for larger screens -->
-                <div class="hidden sm:flex items-center space-x-6">
-                    <a href="{% url 'view_cart' %}" class="relative text-gray-700 hover:text-green-700">
-                        🛒
-                        <span
-                            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-1">
-                            {{ cart_count|default:0 }}
-                        </span>
-                    </a>
-                </div>
                 <!-- Cart Icon -->
                 <div class="fixed bottom-6 right-4 z-50 bg-white p-3 sm:p-4 rounded-full shadow-lg">
                     <a href="{% url 'view_cart' %}"
@@ -221,7 +210,6 @@
     </footer>
     <script src="{% static 'js/main.js' %}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
         window.productName = "{{ product.name }} - AmodGreen";
         window.productDescription = "{{ product.description|truncatewords:20 }}";

@@ -1,292 +1,597 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}Créer un produit{% endblock %}
+{% block title %}Créer un produit - Admin{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto py-8 px-4">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-olive-600">Ajouter un nouveau produit</h1>
-        <a href="{% url 'admin_dashboard' %}" class="text-stone-600 hover:text-olive-600">
-            <i class="fas fa-arrow-left mr-1"></i> Retour au dashboard
-        </a>
-    </div>
-    
-    <form method="post" enctype="multipart/form-data" class="space-y-8 bg-white p-8 rounded-xl shadow-lg border border-stone-100">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        
-        <!-- Section Informations de base -->
-        <div class="space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Informations de base</h2>
-                <a href="{% url 'category_create' %}" 
-                   class="flex items-center text-sm bg-olive-600 hover:bg-olive-700 text-white px-3 py-1.5 rounded-lg transition">
-                    <i class="fas fa-folder-plus mr-1.5"></i> Nouvelle catégorie
+<div class="min-h-screen bg-gradient-to-br from-stone-50 via-white to-olive-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-stone-800 mb-2 flex items-center gap-3">
+                        <div class="w-12 h-12 bg-olive-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-plus text-white text-xl"></i>
+                        </div>
+                        Créer un nouveau produit
+                    </h1>
+                    <p class="text-stone-600">Ajoutez un nouveau produit à votre boutique</p>
+                </div>
+                <a href="{% url 'admin_dashboard' %}"
+                   class="flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors shadow-sm">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Retour</span>
                 </a>
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    {{ form.name|as_crispy_field }}
-                    {{ form.name_ar|as_crispy_field }}
-                    {{ form.category|as_crispy_field }}
-                </div>
-                <div class="space-y-4">
-                    {{ form.price|as_crispy_field }}
-                    {{ form.is_available|as_crispy_field }}
-                </div>
-            </div>
         </div>
-        
-        <!-- Section Description -->
-        <div class="space-y-6">
-            <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Description</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    {{ form.description|as_crispy_field }}
-                </div>
-                <div class="space-y-4">
-                    {{ form.description_ar|as_crispy_field }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Section Ingrédients -->
-        <div class="space-y-6">
-            <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Ingrédients</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    {{ form.ingredients|as_crispy_field }}
-                </div>
-                <div class="space-y-4">
-                    {{ form.ingredients_ar|as_crispy_field }}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Section Images -->
-        <div class="space-y-6">
-            <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Images</h2>
-            
-            <!-- Image principale -->
-            <div class="space-y-4">
-                <div class="flex items-center space-x-4">
-                    <div class="flex-1">
-                        {{ form.image|as_crispy_field }}
+
+        <form method="post" enctype="multipart/form-data" id="product-form" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Progress Steps -->
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3 step-item active" data-step="1">
+                        <div class="w-10 h-10 rounded-full bg-olive-600 text-white flex items-center justify-center font-bold">1</div>
+                        <span class="font-medium text-stone-800">Informations</span>
                     </div>
-                    {% if form.instance.image %}
-                    <div class="w-24 h-24 rounded-lg overflow-hidden border border-stone-200">
-                        <img src="{{ form.instance.image.url }}" alt="Image actuelle" class="w-full h-full object-cover">
+                    <div class="flex-1 h-1 bg-stone-200 mx-4"></div>
+                    <div class="flex items-center gap-3 step-item" data-step="2">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center font-bold">2</div>
+                        <span class="font-medium text-stone-600">Images</span>
                     </div>
-                    {% endif %}
+                    <div class="flex-1 h-1 bg-stone-200 mx-4"></div>
+                    <div class="flex items-center gap-3 step-item" data-step="3">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center font-bold">3</div>
+                        <span class="font-medium text-stone-600">Variantes</span>
+                    </div>
                 </div>
-                <p class="text-xs text-stone-500 mt-1">Image principale du produit (recommandé: 800x800px)</p>
             </div>
-            
-            <!-- Images supplémentaires -->
-            <div class="space-y-4">
-                <label class="block text-sm font-medium text-stone-700">Images supplémentaires</label>
-                <div class="flex items-center space-x-4">
-                    <label for="additional-images" class="cursor-pointer">
-                        <div class="flex flex-col items-center justify-center w-40 h-32 border-2 border-dashed border-stone-300 rounded-lg bg-stone-50 hover:bg-stone-100 transition">
-                            <i class="fas fa-cloud-upload-alt text-3xl text-stone-400 mb-2"></i>
-                            <span class="text-sm text-stone-500">Glisser-déposer ou</span>
-                            <span class="text-sm font-medium text-olive-600">Parcourir</span>
+
+            <!-- Step 1: Basic Information -->
+            <div class="form-step active" data-step="1">
+                <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-olive-600 to-sage-600 px-6 py-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-info-circle"></i>
+                            Informations de base
+                        </h2>
+                    </div>
+
+                    <div class="p-8 space-y-6">
+                        <!-- Category with quick add -->
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                {{ form.category|as_crispy_field }}
+                            </div>
+                            <div class="pt-7">
+                                <a href="{% url 'category_create' %}" target="_blank"
+                                   class="flex items-center gap-2 px-4 py-2 bg-olive-600 hover:bg-olive-700 text-white rounded-lg transition-colors shadow-sm">
+                                    <i class="fas fa-folder-plus"></i>
+                                    <span class="hidden sm:inline">Nouvelle catégorie</span>
+                                </a>
+                            </div>
                         </div>
-                        <input id="additional-images" type="file" name="images" multiple class="hidden" accept="image/*">
-                    </label>
-                    <div id="images-preview-container" class="flex flex-wrap gap-3"></div>
+
+                        <!-- Names -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm font-medium text-stone-700">
+                                    <i class="fas fa-font text-olive-600"></i>
+                                    Nom du produit (Français)
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <p class="text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm font-medium text-stone-700">
+                                    <i class="fas fa-font text-olive-600"></i>
+                                    اسم المنتج (العربية)
+                                </label>
+                                {{ form.name_ar }}
+                                {% if form.name_ar.errors %}
+                                    <p class="text-sm text-red-600">{{ form.name_ar.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Price and Availability -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm font-medium text-stone-700">
+                                    <i class="fas fa-tag text-olive-600"></i>
+                                    Prix de base (MAD)
+                                </label>
+                                {{ form.price }}
+                                {% if form.price.errors %}
+                                    <p class="text-sm text-red-600">{{ form.price.errors.0 }}</p>
+                                {% endif %}
+                                <p class="text-xs text-stone-500">Ce prix sera utilisé par défaut si aucune variante n'est définie</p>
+                            </div>
+                            <div class="space-y-2 pt-7">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    {{ form.is_available }}
+                                    <span class="text-sm font-medium text-stone-700">Produit disponible à la vente</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Descriptions -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm font-medium text-stone-700">
+                                    <i class="fas fa-align-left text-olive-600"></i>
+                                    Description (Français)
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <p class="text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm font-medium text-stone-700">
+                                    <i class="fas fa-align-left text-olive-600"></i>
+                                    الوصف (العربية)
+                                </label>
+                                {{ form.description_ar }}
+                                {% if form.description_ar.errors %}
+                                    <p class="text-sm text-red-600">{{ form.description_ar.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Ingredients -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm font-medium text-stone-700">
+                                    <i class="fas fa-leaf text-olive-600"></i>
+                                    Ingrédients (Français)
+                                </label>
+                                {{ form.ingredients }}
+                                {% if form.ingredients.errors %}
+                                    <p class="text-sm text-red-600">{{ form.ingredients.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm font-medium text-stone-700">
+                                    <i class="fas fa-leaf text-olive-600"></i>
+                                    المكونات (العربية)
+                                </label>
+                                {{ form.ingredients_ar }}
+                                {% if form.ingredients_ar.errors %}
+                                    <p class="text-sm text-red-600">{{ form.ingredients_ar.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-xs text-stone-500">Formats supportés: JPG, PNG, WEBP. Max 5MB par image.</p>
+
+                <div class="flex justify-end mt-6">
+                    <button type="button" class="next-step px-8 py-3 bg-olive-600 hover:bg-olive-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
+                        Suivant
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
             </div>
-        </div>
-        
-        <!-- Section Variantes -->
-        <div class="space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-stone-800 border-b-2 border-olive-500 pb-2">Variantes du produit</h2>
-                <button type="button" id="add-variant-btn" class="flex items-center text-sm bg-olive-600 hover:bg-olive-700 text-white px-3 py-1.5 rounded-lg transition">
-                    <i class="fas fa-plus mr-1.5"></i> Ajouter une variante
-                </button>
+
+            <!-- Step 2: Images -->
+            <div class="form-step" data-step="2">
+                <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-images"></i>
+                            Images du produit
+                        </h2>
+                    </div>
+
+                    <div class="p-8 space-y-8">
+                        <!-- Main Image -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-stone-800 flex items-center gap-2">
+                                <i class="fas fa-image text-olive-600"></i>
+                                Image principale
+                            </h3>
+
+                            <div class="flex items-center gap-6">
+                                <label for="id_image" class="cursor-pointer block">
+                                    <div class="w-48 h-48 border-2 border-dashed border-stone-300 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors flex flex-col items-center justify-center gap-3" id="main-image-preview">
+                                        <i class="fas fa-cloud-upload-alt text-5xl text-stone-400"></i>
+                                        <div class="text-center">
+                                            <p class="text-sm font-medium text-stone-600">Cliquez pour télécharger</p>
+                                            <p class="text-xs text-stone-500">PNG, JPG jusqu'à 5MB</p>
+                                        </div>
+                                    </div>
+                                </label>
+                                {{ form.image }}
+
+                                <div class="flex-1 space-y-2">
+                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        <h4 class="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                                            <i class="fas fa-lightbulb"></i>
+                                            Conseils pour la photo
+                                        </h4>
+                                        <ul class="text-sm text-blue-800 space-y-1">
+                                            <li>• Format carré recommandé (800x800px)</li>
+                                            <li>• Fond blanc ou neutre</li>
+                                            <li>• Éclairage naturel</li>
+                                            <li>• Produit centré et bien visible</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Images -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-stone-800 flex items-center gap-2">
+                                <i class="fas fa-images text-olive-600"></i>
+                                Images supplémentaires (optionnel)
+                            </h3>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                <label for="additional-images" class="cursor-pointer block">
+                                    <div class="aspect-square border-2 border-dashed border-stone-300 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors flex flex-col items-center justify-center gap-2">
+                                        <i class="fas fa-plus text-3xl text-stone-400"></i>
+                                        <p class="text-xs text-stone-500 text-center px-2">Ajouter des images</p>
+                                    </div>
+                                </label>
+                                <input id="additional-images" type="file" name="images" multiple class="hidden" accept="image/*">
+                                <div id="additional-images-preview" class="contents"></div>
+                            </div>
+                            <p class="text-xs text-stone-500">Vous pouvez ajouter jusqu'à 5 images supplémentaires</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button type="button" class="prev-step px-8 py-3 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-lg font-medium transition-colors flex items-center gap-2">
+                        <i class="fas fa-arrow-left"></i>
+                        Précédent
+                    </button>
+                    <button type="button" class="next-step px-8 py-3 bg-olive-600 hover:bg-olive-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
+                        Suivant
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
             </div>
-            
-            {{ variant_formset.management_form }}
-            <div class="overflow-x-auto rounded-lg border border-stone-200">
-                <table class="min-w-full divide-y divide-stone-200">
-                    <thead class="bg-stone-50">
-                        <tr>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-stone-500 uppercase tracking-wider">Défaut</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Nom</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Prix (MAD)</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-stone-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="variant-forms-container" class="bg-white divide-y divide-stone-200">
-                        {% for form_variant in variant_formset.forms %}
-                        <tr class="variant-form-row hover:bg-stone-50 transition">
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <input type="radio" name="default_variant" value="{{ forloop.counter0 }}" 
-                                       class="h-4 w-4 text-olive-600 border-stone-300 focus:ring-olive-500"
-                                       {% if form_variant.instance.pk and form_variant.instance == form_variant.instance.product.default_variant %}checked{% endif %}>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                {{ form_variant.name|as_crispy_field }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                {{ form_variant.price|as_crispy_field }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                {{ form_variant.DELETE|as_crispy_field }}
-                                <button type="button" class="remove-variant-btn ml-2 text-red-500 hover:text-red-700" aria-label="Supprimer la variante">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+            <!-- Step 3: Variants -->
+            <div class="form-step" data-step="3">
+                <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-layer-group"></i>
+                            Variantes du produit
+                        </h2>
+                        <button type="button" id="add-variant-btn" class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                            <i class="fas fa-plus"></i>
+                            Ajouter une variante
+                        </button>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-info-circle text-yellow-600 mt-0.5"></i>
+                                <div class="text-sm text-yellow-800">
+                                    <p class="font-medium mb-1">Qu'est-ce qu'une variante ?</p>
+                                    <p>Les variantes permettent de proposer le même produit avec différentes options (ex: 250ml, 500ml, 1L). Chaque variante peut avoir son propre prix.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{ variant_formset.management_form }}
+                        <div id="variants-container" class="space-y-4">
+                            {% for form_variant in variant_formset.forms %}
+                            <div class="variant-row bg-stone-50 border border-stone-200 rounded-xl p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h4 class="font-semibold text-stone-800 flex items-center gap-2">
+                                        <i class="fas fa-box text-olive-600"></i>
+                                        Variante #<span class="variant-number">{{ forloop.counter }}</span>
+                                    </h4>
+                                    <button type="button" class="remove-variant text-red-500 hover:text-red-700 transition-colors">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="md:col-span-2 space-y-2">
+                                        <label class="text-sm font-medium text-stone-700">Nom de la variante</label>
+                                        {{ form_variant.name }}
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium text-stone-700">Prix (MAD)</label>
+                                        {{ form_variant.price }}
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 flex items-center gap-2">
+                                    <input type="radio" name="default_variant" value="{{ forloop.counter0 }}"
+                                           class="h-4 w-4 text-olive-600 border-stone-300 focus:ring-olive-500"
+                                           {% if forloop.first %}checked{% endif %}>
+                                    <label class="text-sm text-stone-600">Définir comme variante par défaut</label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div id="no-variants-message" class="text-center py-8 text-stone-500" style="display: none;">
+                            <i class="fas fa-box-open text-4xl mb-3"></i>
+                            <p>Aucune variante ajoutée. Cliquez sur "Ajouter une variante" pour commencer.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button type="button" class="prev-step px-8 py-3 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-lg font-medium transition-colors flex items-center gap-2">
+                        <i class="fas fa-arrow-left"></i>
+                        Précédent
+                    </button>
+                    <button type="submit" class="px-8 py-3 bg-gradient-to-r from-olive-600 to-sage-600 hover:from-olive-700 hover:to-sage-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2">
+                        <i class="fas fa-save"></i>
+                        Créer le produit
+                    </button>
+                </div>
             </div>
-        </div>
-        
-        <!-- Boutons de soumission -->
-        <div class="flex justify-end space-x-4 pt-6 border-t border-stone-200">
-            <a href="{% url 'admin_dashboard' %}" class="px-6 py-2.5 border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-100 transition">
-                Annuler
-            </a>
-            <button type="submit" class="px-6 py-2.5 bg-olive-600 hover:bg-olive-700 text-white rounded-lg shadow-sm transition flex items-center">
-                <i class="fas fa-save mr-2"></i> Enregistrer le produit
-            </button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
+
+<style>
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.step-item.active .w-10 {
+    background-color: #8a9b5d;
+}
+
+.step-item.active span {
+    color: #1f2937;
+}
+
+#id_image {
+    display: none;
+}
+
+#id_name, #id_name_ar, #id_price,
+#id_description, #id_description_ar,
+#id_ingredients, #id_ingredients_ar,
+input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #8a9b5d;
+    box-shadow: 0 0 0 3px rgba(138, 155, 93, 0.1);
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+#id_is_available {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('product-form');
+    const steps = document.querySelectorAll('.form-step');
+    const stepItems = document.querySelectorAll('.step-item');
+    let currentStep = 1;
+
+    // Step navigation
+    document.querySelectorAll('.next-step').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (validateStep(currentStep)) {
+                currentStep++;
+                updateStep();
+            }
+        });
+    });
+
+    document.querySelectorAll('.prev-step').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentStep--;
+            updateStep();
+        });
+    });
+
+    function updateStep() {
+        steps.forEach((step, index) => {
+            step.classList.toggle('active', index + 1 === currentStep);
+        });
+
+        stepItems.forEach((item, index) => {
+            item.classList.toggle('active', index + 1 <= currentStep);
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep(step) {
+        if (step === 1) {
+            const name = document.getElementById('id_name');
+            const category = document.getElementById('id_category');
+            const price = document.getElementById('id_price');
+
+            if (!name.value.trim()) {
+                alert('Veuillez saisir le nom du produit');
+                name.focus();
+                return false;
+            }
+
+            if (!category.value) {
+                alert('Veuillez sélectionner une catégorie');
+                category.focus();
+                return false;
+            }
+
+            if (!price.value || parseFloat(price.value) <= 0) {
+                alert('Veuillez saisir un prix valide');
+                price.focus();
+                return false;
+            }
+        }
+
+        if (step === 2) {
+            const mainImage = document.getElementById('id_image');
+            if (!mainImage.files.length) {
+                alert('Veuillez sélectionner une image principale');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Main image preview
+    const mainImageInput = document.getElementById('id_image');
+    const mainImagePreview = document.getElementById('main-image-preview');
+
+    mainImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                mainImagePreview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-xl">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Additional images preview
+    const additionalImagesInput = document.getElementById('additional-images');
+    const additionalImagesPreview = document.getElementById('additional-images-preview');
+
+    additionalImagesInput.addEventListener('change', () => {
+        additionalImagesPreview.innerHTML = '';
+        Array.from(additionalImagesInput.files).forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'relative group aspect-square';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover rounded-xl border-2 border-stone-200">
+                        <button type="button" class="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    `;
+                    additionalImagesPreview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+
+    // Variants management
     const variantFormPrefix = "{{ variant_formset.prefix }}";
     let formCount = parseInt("{{ variant_formset.total_form_count }}");
     const totalFormsInput = document.getElementById(`id_${variantFormPrefix}-TOTAL_FORMS`);
-    const variantFormsContainer = document.getElementById('variant-forms-container');
+    const variantsContainer = document.getElementById('variants-container');
+    const noVariantsMessage = document.getElementById('no-variants-message');
 
-    // Image preview for additional images
-    const imageInput = document.getElementById('additional-images');
-    const imagesPreviewContainer = document.getElementById('images-preview-container');
-    
-    if (imageInput) {
-        imageInput.addEventListener('change', () => {
-            imagesPreviewContainer.innerHTML = '';
-            Array.from(imageInput.files).forEach(file => {
-                if (!file.type.startsWith('image/')) return;
-                
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const div = document.createElement('div');
-                    div.className = 'relative group w-24 h-24 rounded-lg overflow-hidden border border-stone-200';
-                    div.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200"></div>
-                        <span class="absolute top-1 right-1 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <i class="fas fa-times text-xs text-red-500"></i>
-                        </span>
-                    `;
-                    imagesPreviewContainer.appendChild(div);
-                };
-                reader.readAsDataURL(file);
-            });
+    function updateVariantNumbers() {
+        document.querySelectorAll('.variant-number').forEach((el, index) => {
+            el.textContent = index + 1;
         });
+
+        const variantCount = document.querySelectorAll('.variant-row').length;
+        noVariantsMessage.style.display = variantCount === 0 ? 'block' : 'none';
     }
 
-    // Add variant form
     document.getElementById('add-variant-btn').addEventListener('click', () => {
-        const newFormHtml = `
-            <tr class="variant-form-row hover:bg-stone-50 transition">
-                <td class="px-6 py-4 whitespace-nowrap text-center">
-                    <input type="radio" name="default_variant" value="${formCount}" 
-                           class="h-4 w-4 text-olive-600 border-stone-300 focus:ring-olive-500">
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <input type="text" name="${variantFormPrefix}-${formCount}-name" 
-                           id="id_${variantFormPrefix}-${formCount}-name" required
-                           class="w-full rounded-md border-stone-300 shadow-sm focus:border-olive-500 focus:ring-olive-500">
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <input type="number" name="${variantFormPrefix}-${formCount}-price" 
-                           step="0.01" id="id_${variantFormPrefix}-${formCount}-price" required
-                           class="w-full rounded-md border-stone-300 shadow-sm focus:border-olive-500 focus:ring-olive-500">
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-center">
-                    <button type="button" class="remove-variant-btn text-red-500 hover:text-red-700" aria-label="Supprimer la variante">
+        const newVariantHtml = `
+            <div class="variant-row bg-stone-50 border border-stone-200 rounded-xl p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h4 class="font-semibold text-stone-800 flex items-center gap-2">
+                        <i class="fas fa-box text-olive-600"></i>
+                        Variante #<span class="variant-number">${formCount + 1}</span>
+                    </h4>
+                    <button type="button" class="remove-variant text-red-500 hover:text-red-700 transition-colors">
                         <i class="fas fa-trash-alt"></i>
                     </button>
-                </td>
-            </tr>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="text-sm font-medium text-stone-700">Nom de la variante</label>
+                        <input type="text" name="${variantFormPrefix}-${formCount}-name"
+                               id="id_${variantFormPrefix}-${formCount}-name" required
+                               class="w-full px-3 py-2 border border-stone-300 rounded-lg" placeholder="Ex: 250ml">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-stone-700">Prix (MAD)</label>
+                        <input type="number" name="${variantFormPrefix}-${formCount}-price"
+                               step="0.01" id="id_${variantFormPrefix}-${formCount}-price" required
+                               class="w-full px-3 py-2 border border-stone-300 rounded-lg" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center gap-2">
+                    <input type="radio" name="default_variant" value="${formCount}"
+                           class="h-4 w-4 text-olive-600 border-stone-300 focus:ring-olive-500">
+                    <label class="text-sm text-stone-600">Définir comme variante par défaut</label>
+                </div>
+            </div>
         `;
-        variantFormsContainer.insertAdjacentHTML('beforeend', newFormHtml);
+
+        variantsContainer.insertAdjacentHTML('beforeend', newVariantHtml);
         formCount++;
         totalFormsInput.value = formCount;
+        updateVariantNumbers();
     });
 
-    // Remove variant form
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.remove-variant-btn')) return;
-        const row = e.target.closest('.variant-form-row');
-        if (!row) return;
-
-        if (!confirm("Êtes-vous sûr de vouloir supprimer cette variante ?")) return;
-
-        const deleteCheckbox = row.querySelector(`input[type="checkbox"][name$="-DELETE"]`);
-        const radioInput = row.querySelector('input[type="radio"]');
-
-        if (deleteCheckbox) {
-            deleteCheckbox.checked = true;
-            row.style.opacity = '0.5';
-            row.style.pointerEvents = 'none';
-            if (radioInput.checked) {
-                radioInput.checked = false;
-                alert("La variante par défaut a été supprimée. Veuillez choisir une autre variante par défaut.");
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.remove-variant')) {
+            if (confirm('Supprimer cette variante ?')) {
+                e.target.closest('.variant-row').remove();
+                formCount--;
+                totalFormsInput.value = formCount;
+                updateVariantNumbers();
             }
-        } else {
-            // Variante nouvellement créée, supprimer directement
-            if (radioInput.checked) {
-                radioInput.checked = false;
-                alert("La variante par défaut a été supprimée. Veuillez choisir une autre variante par défaut.");
-            }
-            row.remove();
-            formCount = document.querySelectorAll('.variant-form-row').length;
-            totalFormsInput.value = formCount;
-            // Reindexer names/id pour éviter problème formset
-            const rows = variantFormsContainer.querySelectorAll('.variant-form-row');
-            rows.forEach((r, idx) => {
-                r.querySelectorAll('input').forEach(input => {
-                    if (input.name) {
-                        input.name = input.name.replace(new RegExp(`${variantFormPrefix}-\\d+`), `${variantFormPrefix}-${idx}`);
-                    }
-                    if (input.id) {
-                        input.id = input.id.replace(new RegExp(`${variantFormPrefix}-\\d+`), `${variantFormPrefix}-${idx}`);
-                    }
-                });
-                const radio = r.querySelector('input[type="radio"]');
-                if (radio) radio.value = idx;
-            });
         }
     });
 
-    // Validation avant soumission
-    document.querySelector('form').addEventListener('submit', e => {
+    // Form submission validation
+    form.addEventListener('submit', (e) => {
         const radios = document.querySelectorAll('input[name="default_variant"]');
-        if (![...radios].some(r => r.checked)) {
+        const variantRows = document.querySelectorAll('.variant-row');
+
+        if (variantRows.length > 0 && ![...radios].some(r => r.checked)) {
             e.preventDefault();
-            alert("Veuillez sélectionner une variante par défaut.");
-            return;
-        }
-        
-        const mainImage = document.querySelector('input[name="image"]');
-        if (!mainImage.files.length && !mainImage.value) {
-            e.preventDefault();
-            alert("Veuillez sélectionner une image principale pour le produit.");
-            return;
+            alert('Veuillez sélectionner une variante par défaut');
+            document.querySelector('[data-step="3"]').click();
+            return false;
         }
     });
+
+    updateVariantNumbers();
 });
 </script>
 {% endblock %}

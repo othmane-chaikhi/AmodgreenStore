@@ -105,13 +105,14 @@
                         </span>
 
                         <div class="flex gap-2">
-                            <a href="{{ product.get_absolute_url }}" 
+                            <a href="{{ product.get_absolute_url }}"
                                class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-3 py-1 rounded text-sm transition-colors">
                                 <i class="fas fa-eye mr-1"></i>Voir
                             </a>
-                             <a href="{% url 'add_to_cart' product.id %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-     <span class="text-left">Ajouter au panier</span> <span class="text-right" dir="rtl">أضف للسلة</span>
-</a>
+                            <a href="{% url 'add_to_cart' product.id %}"
+                               class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
+                                <i class="fas fa-cart-plus mr-1"></i>Ajouter
+                            </a>
                         </div>
                     </div>
                 </div>
